@@ -1,0 +1,87 @@
+// ============================================================================
+// Responsive
+//
+// Imported LAST, deliberately. An unconditional rule that appears after a
+// media-query rule of equal specificity wins even inside the query, so every
+// override here would be silently beaten if this file moved further up.
+// ============================================================================
+
+// ── Below the widescreen band: drop the right rail ───────────────────────────
+@media (max-width: 1199px) {
+  .Cascade-rail {
+    display: none;
+  }
+
+  .App--index .Page-content {
+    // Give the reclaimed space back to the feed rather than leaving it blank.
+    width: auto;
+    flex: 1 1 auto;
+    max-width: var(--cs-feed-width);
+  }
+}
+
+// ── Tablet and below: no standing rails at all ───────────────────────────────
+@media @phone, @tablet {
+  .App--index {
+    .Page-content {
+      width: 100%;
+      max-width: none;
+      flex: 1 1 auto;
+      margin-top: 0;
+    }
+
+    .IndexPage-nav {
+      position: static;
+    }
+  }
+
+  [data-cascade-preset='timeline'] .App--index .Page-content {
+    border-inline: 0;
+  }
+
+  [data-cascade-preset='timeline'] .App--index .IndexPage-toolbar {
+    top: var(--header-height-phone);
+  }
+
+  // Rows go full-bleed: a card with side margins wastes a third of a phone.
+  [data-cascade-preset='wall'] {
+    .DiscussionList-discussions {
+      gap: 10px;
+    }
+
+    .DiscussionListItem-content {
+      border-radius: 0;
+    }
+  }
+
+  .Cascade-composer {
+    border-radius: 0;
+  }
+
+  .Cascade-media {
+    --cs-media-height: 200px;
+  }
+}
+
+// ── Phone only ───────────────────────────────────────────────────────────────
+@media @phone {
+  .Cascade-engagement-action {
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  // Labels would wrap at this width; the icon carries the meaning and the
+  // accessible name stays on the button.
+  .Cascade-composer-action span:not(.icon) {
+    display: none;
+  }
+}
+
+// ── Motion ───────────────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .Cascade-newPosts,
+  .Cascade-media img {
+    transition: none;
+    animation: none;
+  }
+}

@@ -1,0 +1,67 @@
+// ============================================================================
+// Header
+//
+// Both lineages keep a single fixed bar. Wall fills it: logo, a pill search,
+// centred nav icons, then the controls. Timeline has no top bar of its own —
+// on X the navigation lives in the left rail — so the preset file collapses
+// most of this. What stays here is only what both share.
+// ============================================================================
+
+.App-header {
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--cs-line);
+  box-shadow: none;
+}
+
+.Header-title {
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+// Core's header search is a bare input. Both lineages use a filled pill.
+.App-header .Search-input input,
+.App-header .SearchBar input {
+  background: var(--control-bg);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  height: 38px;
+  padding-inline: 16px;
+  color: var(--text-color);
+
+  &::placeholder {
+    color: var(--muted-color);
+  }
+
+  &:focus {
+    background: var(--cs-surface);
+    border-color: var(--cs-accent);
+  }
+}
+
+// Header icon buttons become circles, the way both platforms draw them.
+.Header-controls > li > .Button--icon,
+.Header-controls > li > .Dropdown > .Button--icon {
+  background: var(--control-bg);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  color: var(--header-color);
+
+  &:hover,
+  &:focus {
+    background: var(--cs-hover);
+  }
+}
+
+// The notification count sits on the circle rather than beside it.
+.Header-controls .NotificationsDropdown .Button-badge {
+  position: absolute;
+  top: -2px;
+  inset-inline-end: -2px;
+  border: 2px solid var(--header-bg);
+}
+
+.Header-controls .Avatar {
+  width: 38px;
+  height: 38px;
+}

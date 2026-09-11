@@ -1,0 +1,432 @@
+// ============================================================================
+// The feed row
+//
+// Core's DiscussionListItem is built from ItemLists, so Cascade adds to it
+// rather than replacing it:
+//
+//   .DiscussionListItem
+//     .DiscussionListItem-content          <- the card
+//       .Cascade-avatar                    (new)
+//       .Cascade-author                    (new)  name + time
+//       .DiscussionListItem-main
+//         .DiscussionListItem-title
+//         .DiscussionListItem-info         core's terminal post + flarum/tags
+//       .Cascade-body                      (new)  excerpt + media
+//       .DiscussionListItem-stats          core's reply count
+//       .Cascade-engagement                (new)  Reply / Share
+//       .Cascade-replies                   (new)  latest reply preview
+//     .DiscussionListItem-controls         the ... menu
+//
+// Keeping core's own items in place is what lets flarum/tags, fof/best-answer,
+// sticky, locked and every other list decorator keep working untouched.
+// ============================================================================
+
+// ── Undo core's tablet-up bleed ──────────────────────────────────────────────
+//
+// At @tablet-up core pulls the row 15px outside its own box on both sides,
+// pads it back, and tints it on hover. That made three visible problems at
+// once in a card layout: the hover tint painted a rectangle AROUND the card,
+// the ... control sat outside the card's right edge, and every row was offset
+// from the composer above it. The card is the surface here, so all of it goes.
+//
+// Specificity beats core's `@tablet-up .DiscussionListItem` (0,1,0) without
+// !important because the preset attribute adds a second attribute selector.
+[data-cascade-preset] .DiscussionListItem {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cs-radius);
+  background: transparent;
+  transition: none;
+
+  &:hover {
+    background: transparent;
+  }
+}
+
+// ── The card ────────────────────────────────────────────────────────────────
+//
+// Two columns: the avatar, then everything else. Which rows sit beside the
+// avatar and which run full width is the main structural difference between
+// the presets, so each one sets that for itself.
+.DiscussionListItem-content {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--cs-avatar) minmax(0, 1fr);
+  gap: 0 10px;
+  align-items: start;
+  padding: var(--cs-row-pad-y) var(--cs-row-pad-x);
+  color: var(--text-color);
+
+  // Core sets `flex-grow/shrink: 0` on every child for its flex layout. In a
+  // grid that does nothing, but a grid item's default `min-width: auto` will
+  // happily blow the column out on a long unbroken word, so pin it.
+  > * {
+    min-width: 0;
+  }
+}
+
+// Core's own author column is emptied rather than removed: hiding it keeps the
+// unread and slidable behaviour attached to it intact, while .Cascade-avatar
+// renders the avatar where the grid wants it.
+.DiscussionListItem-author {
+  display: none;
+}
+
+.Cascade-avatar {
+  grid-column: 1;
+  grid-row: 1;
+  display: block;
+
+  .Avatar {
+    width: var(--cs-avatar);
+    height: var(--cs-avatar);
+  }
+}
+
+.Cascade-author {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  min-width: 0;
+
+  &-name {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.25;
+
+    // The author is a link, but in a feed card the name reads as a name, not
+    // as a call to action - so it takes the heading colour, not the accent.
+    a {
+      color: var(--heading-color);
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &-sub {
+    margin-top: 1px;
+    color: var(--muted-color);
+    font-size: 12.8px;
+  }
+}
+
+// The ... menu. Core anchors it to .DiscussionListItem, which - once the bleed
+// above is removed - is exactly the card box, so it lands inside the card.
+// Core's hover-to-reveal is kept: a menu on every row at full opacity turns
+// the whole column into a dotted line.
+[data-cascade-preset] .DiscussionListItem-controls {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  inset-inline-start: auto;
+  z-index: 2;
+}
+
+// ── Title, tags, excerpt ─────────────────────────────────────────────────────
+
+.DiscussionListItem-main {
+  display: block;
+  padding: 0;
+  color: inherit;
+}
+
+.DiscussionListItem-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -.01em;
+  margin: 0 0 3px;
+  color: var(--heading-color);
+  // Core truncates to one line with text-overflow; a feed card has room for
+  // the whole headline, so wrap and cap it at three lines instead.
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: normal;
+  .cs-clamp(3);
+
+  .DiscussionList:not(.DiscussionList--searchResults) .unread & {
+    font-weight: 700;
+  }
+}
+
+// Core's info line: the terminal post ("X replied 3h ago") and, when
+// flarum/tags is installed, the tag labels.
+.DiscussionListItem-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  font-size: 12.5px;
+  color: var(--muted-color);
+
+  > li {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+  }
+
+  // Cascade renders the excerpt itself, as prose under the title. Anything
+  // that contributes a second one into core's info line - core's own search
+  // excerpt, or another extension's - would print the same post twice, and in
+  // the raw source form that still carries attachment markers like
+  // `[upl-image-preview uuid=...]`. One excerpt per card.
+  .item-excerpt {
+    display: none;
+  }
+}
+
+.Cascade-body {
+  margin-top: 8px;
+}
+
+.Cascade-excerpt {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.42;
+  color: var(--text-color);
+  .cs-clamp(4);
+}
+
+// "See more" opens the card in place rather than navigating away - the same
+// action the reply count triggers, reached from the other end of the post.
+.Cascade-seeMore {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--muted-color);
+  cursor: pointer;
+  .cs-focus-ring();
+
+  &:hover {
+    color: var(--text-color);
+    text-decoration: underline;
+  }
+}
+
+// The expanded card shows the real opening post, rendered by Flarum's own
+// formatter - so it needs the same care the post stream gives that HTML.
+.Cascade-post {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-color);
+  overflow-wrap: anywhere;
+
+  > :first-child { margin-top: 0; }
+  > :last-child  { margin-bottom: 0; }
+
+  p { margin: 0 0 10px; }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  blockquote {
+    margin: 0 0 10px;
+    padding-inline-start: 12px;
+    border-inline-start: 3px solid var(--cs-line);
+    color: var(--muted-color);
+  }
+}
+
+// ── Media ────────────────────────────────────────────────────────────────────
+
+.Cascade-media {
+  display: block;
+  margin-top: 11px;
+  overflow: hidden;
+  border-radius: var(--cs-media-radius);
+  background: var(--control-bg);
+  position: relative;
+
+  img {
+    display: block;
+    width: 100%;
+    // Height follows the image, capped rather than fixed. A fixed height
+    // stretches a 440x60 logo to 268px and crops away everything but two
+    // letters; letting it size naturally keeps wide images wide and short,
+    // while the cap still stops a tall screenshot from filling the screen.
+    height: auto;
+    max-height: var(--cs-media-height);
+    object-fit: cover;
+    object-position: center top;
+    background: var(--control-bg);
+  }
+
+  &-more {
+    position: absolute;
+    inset-inline-end: 10px;
+    bottom: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .62);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// ── Counts ───────────────────────────────────────────────────────────────────
+//
+// Core's stats column is a 40px vertical stack floated beside the excerpt.
+// Here it becomes the counts strip: right-aligned, above the divider, the way
+// "18 comments" sits above the action bar in a social card.
+[data-cascade-preset] .DiscussionListItem-stats {
+  position: static;
+  width: auto;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--cs-line);
+  color: var(--muted-color);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Replies ──────────────────────────────────────────────────────────────────
+
+.Cascade-replies {
+  margin-top: 10px;
+}
+
+.Cascade-reply {
+  display: grid;
+  grid-template-columns: var(--cs-avatar-sm) minmax(0, 1fr);
+  gap: 0 8px;
+  align-items: start;
+
+  & + & {
+    margin-top: 8px;
+  }
+
+  &-avatar {
+    display: block;
+  }
+
+  .Avatar {
+    width: var(--cs-avatar-sm);
+    height: var(--cs-avatar-sm);
+  }
+
+  &-bubble {
+    background: var(--control-bg);
+    border-radius: 16px;
+    padding: 8px 12px;
+    min-width: 0;
+    // A bubble is sized by its content, not by the column, so a two-word
+    // reply does not stretch into a full-width slab.
+    justify-self: start;
+    max-width: 100%;
+  }
+
+  &-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  &-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--heading-color);
+  }
+
+  &-time {
+    font-size: 12px;
+    color: var(--muted-color);
+  }
+
+  // The collapsed preview is plain text and gets clamped.
+  &-text {
+    margin: 1px 0 0;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text-color);
+    .cs-clamp(3);
+  }
+
+  // An expanded reply is real rendered post HTML, shown in full.
+  &-body {
+    margin-top: 1px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text-color);
+    overflow-wrap: anywhere;
+
+    > :first-child { margin-top: 0; }
+    > :last-child  { margin-bottom: 0; }
+
+    p { margin: 0 0 6px; }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+
+    pre {
+      overflow-x: auto;
+      max-width: 100%;
+    }
+  }
+}
+
+.Cascade-replies-more {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted-color);
+  cursor: pointer;
+  .cs-focus-ring();
+
+  &:hover {
+    color: var(--text-color);
+    text-decoration: underline;
+  }
+}
+
+// ── Tags ─────────────────────────────────────────────────────────────────────
+//
+// Shape only. Cascade deliberately does NOT restyle the pill's background:
+// flarum/tags renders the label text in an inner span with
+// `color: var(--tag-color) !important`, where --tag-color is the contrast
+// colour computed for the *filled* background. Change the background here and
+// that text keeps its old contrast colour, unreadable, and a plain `color`
+// override cannot beat the inner !important. A preset that ever wants outlined
+// tags must set the --tag-color custom property too.
+.DiscussionListItem .TagLabel {
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 9px;
+}

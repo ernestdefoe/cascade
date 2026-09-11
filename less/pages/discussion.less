@@ -1,0 +1,40 @@
+// ============================================================================
+// Discussion page
+//
+// The thread. Wall keeps each post in a card; Timeline runs them as hairline-
+// separated rows, with the opening post given more weight than its replies —
+// the way a thread reads on X.
+// ============================================================================
+
+.DiscussionPage .PostStream-item {
+  .cs-surface();
+  margin-bottom: 12px;
+  padding: var(--cs-row-pad-y) var(--cs-row-pad-x);
+}
+
+.DiscussionPage .Post-header {
+  font-size: 14px;
+}
+
+.DiscussionPage .PostUser h3 a {
+  font-weight: 700;
+  color: var(--heading-color);
+}
+
+// Core reserves a fixed avatar gutter on every post. Cascade puts the avatar
+// inline with the author name instead, which is what both lineages do, so the
+// gutter is reclaimed for text.
+.DiscussionPage .Post {
+  padding-inline-start: 0;
+}
+
+.DiscussionPage .Post-body {
+  font-size: var(--post-font-size);
+}
+
+// The reply box at the foot of the stream mirrors the feed composer, so the
+// same affordance means the same thing in both places.
+.DiscussionPage .ReplyPlaceholder {
+  .cs-surface();
+  padding: 12px 16px;
+}

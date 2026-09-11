@@ -1,0 +1,78 @@
+// ============================================================================
+// The three-column shell
+//
+// Core's PageStructure already renders a two-column flex container:
+//
+//   .Page-container.container
+//     .Page-sidebar      ← IndexSidebar
+//     .Page-content      ← toolbar + DiscussionList
+//
+// and it drives both widths from CSS variables (`--sidebar-width`,
+// `--content-width`, `--gap`) that a theme is expected to retune. Cascade
+// retunes them and adds a third child, `.Cascade-rail`, from JS.
+//
+// Nothing here replaces core's layout; it only supplies different numbers and
+// one extra column.
+// ============================================================================
+
+.App--index .Page-container,
+.App--index .Page-main {
+  // The feed is the page. Core's hero sits above it and is left alone, but on
+  // the index Cascade wants the rails flush to the top of the content area.
+  --gap: var(--cs-gap);
+}
+
+.App--index {
+  .Page-sidebar {
+    --sidebar-width: var(--cs-rail-left);
+  }
+
+  .Page-content {
+    // Fixed rather than fluid: the whole point of both lineages is a column of
+    // a known, readable width with the rails absorbing the slack.
+    width: var(--cs-feed-width);
+    flex: 0 0 var(--cs-feed-width);
+    min-width: 0;
+    margin-top: 0;
+  }
+
+  .Page-sidebar {
+    margin-top: 0;
+  }
+
+  .Page-container {
+    align-items: flex-start;
+    justify-content: center;
+  }
+}
+
+// The right rail, injected into .Page-container after .Page-content.
+.Cascade-rail {
+  width: var(--cs-rail-right);
+  flex: 0 0 var(--cs-rail-right);
+  min-width: 0;
+  position: sticky;
+  // Clear the fixed header so a sticky rail does not slide under it.
+  top: calc(var(--header-height) + 16px);
+  align-self: flex-start;
+}
+
+// Both rails scroll with the page until they run out of content, then stop.
+// `position: sticky` on the left rail has to be applied to the nav itself
+// rather than .Page-sidebar, because the flex item stretches to the row height.
+.App--index .IndexPage-nav {
+  position: sticky;
+  top: calc(var(--header-height) + 16px);
+}
+
+// Core draws a vertical rule to the right of the side nav. Cascade's columns
+// are separated by whitespace (Wall) or by the feed's own borders (Timeline),
+// so the rule is redundant in both.
+.App--index .sideNav:after {
+  display: none;
+}
+
+// The index toolbar (sort, mark-all-read, refresh) is NOT hidden. It carries
+// real controls, and a feed that quietly drops the sort control is a feed whose
+// users cannot find their own discussions. It is restyled into the head of the
+// feed column instead — see feed/head.less.

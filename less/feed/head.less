@@ -1,0 +1,44 @@
+// ============================================================================
+// Feed head
+//
+// Core's IndexPage-toolbar holds the sort control and the page actions. Cascade
+// keeps every one of them and re-draws the container as the head of the feed
+// column — a strip in Wall, the sticky tab bar in Timeline.
+// ============================================================================
+
+.App--index .IndexPage-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--cs-gap);
+  padding: 8px 12px;
+  .cs-surface();
+  min-height: 46px;
+
+  // The toolbar's own two lists.
+  &-view,
+  &-action {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &-action {
+    margin-inline-start: auto;
+  }
+
+  .Button {
+    background: transparent;
+    color: var(--muted-color);
+    font-weight: 600;
+
+    &:hover,
+    &:focus {
+      background: var(--cs-hover);
+      color: var(--text-color);
+    }
+  }
+}

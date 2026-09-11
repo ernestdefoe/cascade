@@ -1,0 +1,118 @@
+// ============================================================================
+// Timeline - the X lineage
+//
+// No cards. One column between two hairlines, rows separated by a single line,
+// and an action bar that stays muted until it is hovered.
+// ============================================================================
+
+[data-cascade-preset='timeline'] {
+
+  // The column itself carries the rules, so the rows inside need none.
+  .App--index .Page-content {
+    border-inline: 1px solid var(--cs-line);
+  }
+
+  .DiscussionList-discussions {
+    display: block;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .DiscussionListItem {
+    border-bottom: 1px solid var(--cs-line);
+    border-radius: 0;
+  }
+
+  // Rows DO tint on hover here: without a card edge, the tint is the only
+  // thing that tells you which row the pointer is on.
+  .DiscussionListItem:hover .DiscussionListItem-content {
+    background: var(--cs-hover);
+  }
+
+  // The avatar spans the whole row and the content runs beside it, top to
+  // bottom - the shape that makes a timeline read as one conversation per row.
+  .Cascade-avatar {
+    // Longhand: see the note in wall.less - LESS treats `1 / -1` as maths.
+    grid-row-start: 1;
+    grid-row-end: -1;
+  }
+
+  .DiscussionListItem-main,
+  .Cascade-body,
+  .DiscussionListItem-stats,
+  .Cascade-engagement,
+  .Cascade-replies {
+    grid-column: 2;
+  }
+
+  .DiscussionListItem-title {
+    font-size: 16px;
+    margin-top: 4px;
+  }
+
+  // The feed head becomes the sticky tab strip.
+  .App--index .IndexPage-toolbar {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 2;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--cs-line);
+    background: var(--cs-surface);
+  }
+
+  .Cascade-composer {
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--cs-line);
+    margin-bottom: 0;
+  }
+
+  // Media is inset and rounded rather than bleeding to the edge.
+  .Cascade-media {
+    border: 1px solid var(--cs-line);
+    border-radius: var(--cs-media-radius);
+  }
+
+  // Counts live in the action bar here, not on a line of their own.
+  .DiscussionListItem-stats {
+    display: none;
+  }
+
+  // The action bar is a spread row of quiet icons, not labelled buttons, and it
+  // stops short of the full column width the way X's does.
+  .Cascade-engagement {
+    max-width: 430px;
+    margin-top: 12px;
+    padding-top: 0;
+
+    &-action {
+      flex: 0 0 auto;
+      justify-content: flex-start;
+      gap: 7px;
+      padding: 4px 8px;
+      font-size: 13px;
+      font-weight: 400;
+
+      &:first-child {
+        padding-inline-start: 0;
+      }
+    }
+  }
+
+  // Reply tints blue, share green - the platform's own semantics, and the only
+  // place in the theme where colour is not the forum's accent.
+  .Cascade-engagement-action[data-cs-action='reply']:hover { color: #1D9BF0; }
+  .Cascade-engagement-action[data-cs-action='share']:hover { color: #00BA7C; }
+
+  // A reply preview is a card idiom. In a hairline timeline it reads as a
+  // quoted line instead.
+  .Cascade-reply-bubble {
+    background: transparent;
+    border-inline-start: 2px solid var(--cs-line);
+    border-radius: 0;
+    padding: 2px 0 2px 10px;
+  }
+}

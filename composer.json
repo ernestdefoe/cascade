@@ -1,0 +1,54 @@
+{
+    "name": "ernestdefoe/cascade",
+    "description": "Cascade — a social-feed theme for Flarum 2. Three-column shell, first-post excerpts and media in the discussion list, and two presets: Wall (cards) and Timeline (hairline rows).",
+    "type": "flarum-extension",
+    "keywords": [
+        "flarum",
+        "flarum-extension",
+        "theme",
+        "feed",
+        "social",
+        "cascade"
+    ],
+    "homepage": "https://github.com/ernestdefoe/cascade",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ernestdefoe",
+            "email": "ernestdefoe@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "flarum/core": "^2.0",
+        "s9e/text-formatter": "^2.0",
+        "fof/reactions": "^2.0@beta"
+    },
+    "suggest": {
+        "flarum/tags": "Tag chips on every feed row, and the tag list in the left rail. Cascade styles them but does not require them.",
+        "flarum/subscriptions": "Powers the Following filter in the left rail and the Follow control on the discussion page.",
+        "flarum/realtime": "Replaces core's 'N updates available' banner with the new-discussions pill at the top of the feed.",
+        "ernestdefoe/presence": "Fills the 'Online now' widget in the right rail. The widget hides itself when this is not installed.",
+        "ernestdefoe/mobile-tab": "Bottom tab bar on phones. Cascade ships a matching preset instead of implementing a second tab bar.",
+        "fof/upload": "Image attachments are what the feed's media grid renders. Without it, only images embedded in post markdown are picked up."
+    },
+    "autoload": {
+        "psr-4": {
+            "ErnestDefoe\\Cascade\\": "src/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Cascade",
+            "category": "theme",
+            "icon": {
+                "name": "fas fa-water",
+                "backgroundColor": "#1D6FD0",
+                "color": "#fff"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

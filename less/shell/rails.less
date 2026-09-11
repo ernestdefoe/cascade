@@ -1,0 +1,184 @@
+// ============================================================================
+// The two rails
+//
+// Left is core's IndexSidebar, restyled from a dropdown-plus-button into a
+// standing nav. Right is Cascade's own column of widgets.
+// ============================================================================
+
+// ── Left rail ────────────────────────────────────────────────────────────────
+
+.App--index .IndexPage-nav {
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+// The nav items themselves. Core renders LinkButtons inside a SelectDropdown
+// whose menu is displayed inline at desktop width; these rules style the menu
+// items, not the dropdown toggle (which responsive.less leaves for narrow).
+.App--index .IndexPage-nav .Dropdown-menu > li > .Button,
+.App--index .IndexPage-nav .Dropdown-menu > li > a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--cs-radius);
+  font-weight: 500;
+  color: var(--text-color);
+  background: transparent;
+
+  .Button-icon,
+  .icon {
+    width: 24px;
+    font-size: 17px;
+    color: var(--muted-color);
+    margin: 0;
+  }
+
+  &:hover,
+  &:focus {
+    background: var(--cs-hover);
+  }
+
+  &.active {
+    background: var(--cs-hover);
+    font-weight: 700;
+
+    .Button-icon,
+    .icon {
+      color: var(--cs-accent);
+    }
+  }
+}
+
+// Core's "Start a discussion" button is hidden on the index, because the
+// composer box at the top of the feed already is that control - and it is the
+// more discoverable of the two, sitting directly above the content it creates.
+//
+// This is a duplicate being removed, not a capability: the composer trigger is
+// added to IndexPage.contentItems, so it appears on every index variant the
+// button did (all discussions, a tag page, Following), on every breakpoint,
+// and it opens the same composer through core's own newDiscussionAction. The
+// button is still rendered on any other page that borrows the index sidebar.
+.App--index .IndexPage-nav .item-newDiscussion {
+  display: none;
+}
+
+// flarum/tags' rail list, when it is installed.
+.App--index .TagsLabel,
+.App--index .IndexPage-nav .TagLinkButton {
+  border-radius: var(--cs-radius);
+}
+
+// ── Right rail ───────────────────────────────────────────────────────────────
+
+.Cascade-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Every widget returns null when it has no data, so an empty rail is a real
+// possibility - a forum with no tags, or one where every widget is switched
+// off. 348px of nothing would push the feed off-centre, so the column removes
+// itself and the feed recentres.
+.Cascade-rail:empty {
+  display: none;
+}
+
+.Cascade-widget {
+  .cs-surface();
+  padding: 14px 16px;
+  overflow: hidden;
+
+  &-title {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--heading-color);
+  }
+
+  &-empty {
+    color: var(--muted-color);
+    font-size: 14px;
+  }
+
+  &-more {
+    display: inline-block;
+    margin-top: 8px;
+    color: var(--cs-accent);
+    font-size: 14px;
+  }
+}
+
+.Cascade-trend {
+  display: block;
+  padding: 7px 0;
+  color: inherit;
+
+  &:hover {
+    color: inherit;
+  }
+
+  &-context,
+  &-count {
+    font-size: 12.5px;
+    color: var(--muted-color);
+  }
+
+  &-name {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin: 1px 0;
+  }
+
+  &-count {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.Cascade-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+
+  &-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  &-handle {
+    font-size: 12.5px;
+    color: var(--muted-color);
+  }
+
+  .Avatar {
+    width: var(--cs-avatar-sm);
+    height: var(--cs-avatar-sm);
+  }
+
+  &-action {
+    margin-inline-start: auto;
+  }
+}
+
+// Presence dot, when ernestdefoe/presence supplies the data.
+.Cascade-person--online .Avatar {
+  position: relative;
+
+  &:after {
+    content: '';
+    position: absolute;
+    inset-inline-end: -1px;
+    bottom: -1px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--online-user-circle-color);
+    border: 2px solid var(--cs-surface);
+  }
+}

@@ -1,0 +1,63 @@
+// ============================================================================
+// Wall - the Facebook lineage
+//
+// Cards floating on a grey ground. Dense chrome. A wide, labelled engagement
+// bar, because this preset is aimed at forums whose visitors mostly lurk and
+// need the affordance spelled out.
+// ============================================================================
+
+[data-cascade-preset='wall'] {
+
+  .DiscussionList-discussions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cs-gap);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .DiscussionListItem-content {
+    .cs-surface();
+  }
+
+  // The card is the surface, so it does not tint on hover - a tinted card
+  // reads as a selection box drawn around the content rather than as feedback.
+  .DiscussionListItem:hover .DiscussionListItem-content {
+    background: var(--cs-surface);
+  }
+
+  // Only the author line sits beside the avatar; everything below runs the
+  // full width of the card, the way a shared post does.
+  .DiscussionListItem-main,
+  .Cascade-body,
+  .DiscussionListItem-stats,
+  .Cascade-engagement,
+  .Cascade-replies {
+    // Longhand on purpose: LESS parses `grid-column: 1 / -1` as division
+    // and emits `-1`, which places the item on the LAST grid line instead
+    // of spanning the row - every element below the author line then
+    // collapsed into a zero-width implicit column.
+    grid-column-start: 1;
+    grid-column-end: -1;
+  }
+
+  .DiscussionListItem-main {
+    margin-top: 9px;
+  }
+
+  // Media bleeds to the card edge, the way a shared photo does.
+  .Cascade-media {
+    margin-inline: calc(var(--cs-row-pad-x) * -1);
+    width: calc(100% + var(--cs-row-pad-x) * 2);
+    border-radius: 0;
+  }
+
+  .Cascade-engagement {
+    border-top: 0;
+  }
+
+  .Cascade-engagement-action {
+    font-size: 14.5px;
+  }
+}

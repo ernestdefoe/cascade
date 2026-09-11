@@ -1,0 +1,174 @@
+// ============================================================================
+// Tokens
+//
+// Two rules govern everything in this file.
+//
+// 1. Colour is declared inside core's own `[data-theme^=light|dark]` blocks,
+//    never behind `prefers-color-scheme`. rc.8 ships four modes — light, dark,
+//    light-hc, dark-hc — with a real user preference behind them. A theme that
+//    keys off the media query fights that preference and leaves both
+//    high-contrast modes unstyled.
+//
+// 2. Cascade sets core variables that core actually defines, and namespaces
+//    everything of its own as `--cs-*`. It never invents an alias pointing at
+//    a variable core does not define: such a declaration is invalid at
+//    computed-value time, the property falls back to *inheritance*, and you get
+//    white-on-white in places nobody tests.
+// ============================================================================
+
+// There is deliberately NO Cascade accent setting. The forum already has one
+// in Appearance, and core precomputes button contrast colours from it in LESS
+// (the YIQ branch in root.less). A second accent applied as a CSS variable at
+// runtime would recolour Cascade's own components while leaving every core
+// button's computed text colour pointing at the old one — the two would drift
+// apart in exactly the places nobody screenshots.
+//
+// Wall reads best around #1877F2 and Timeline around #1D9BF0; both are set the
+// normal way, in Appearance.
+
+// ── Geometry, shared by both presets ─────────────────────────────────────────
+:root {
+  --cs-rail-left:     252px;
+  --cs-gap:           20px;
+
+  --cs-avatar:        40px;
+  --cs-avatar-sm:     32px;
+
+  --cs-row-pad-x:     16px;
+  --cs-row-pad-y:     12px;
+
+  --cs-media-height:  268px;
+  --cs-media-radius:  0px;
+
+  --cs-accent:        var(--primary-color);
+
+  // Cascade renders its own author line, so core's fixed avatar gutter would
+  // only add dead space to the left of every row.
+  --avatar-column-width: 0px;
+}
+
+// ── Wall: the Facebook lineage ───────────────────────────────────────────────
+// Cards on a grey ground, a dense header, a labelled engagement bar.
+[data-cascade-preset='wall'] {
+  --cs-feed-width:    576px;
+  --cs-rail-right:    300px;
+  --cs-radius:        8px;
+  --cs-media-radius:  0px;
+
+  --container-hd:     1168px;
+  --container-xl:     1168px;
+  --container-xxl:    1168px;
+}
+
+[data-cascade-preset='wall'][data-theme^='light'] {
+  --body-bg:        #F0F2F5;
+  --cs-surface:     #FFFFFF;
+  --cs-line:        #CED0D4;
+  --cs-hover:       #F2F2F2;
+  --control-bg:     #E4E6EB;
+  --control-color:  #050505;
+  --text-color:     #080809;
+  --heading-color:  #080809;
+  --muted-color:    #65676B;
+  --header-bg:      #FFFFFF;
+  --header-color:   #050505;
+  --cs-shadow:      0 1px 2px rgba(0, 0, 0, .2);
+}
+
+[data-cascade-preset='wall'][data-theme^='dark'] {
+  --body-bg:        #18191A;
+  --cs-surface:     #242526;
+  --cs-line:        #3A3B3C;
+  --cs-hover:       #3A3B3C;
+  --control-bg:     #3A3B3C;
+  --control-color:  #E4E6EB;
+  --text-color:     #E4E6EB;
+  --heading-color:  #E4E6EB;
+  --muted-color:    #B0B3B8;
+  --header-bg:      #242526;
+  --header-color:   #E4E6EB;
+  --cs-shadow:      0 1px 2px rgba(0, 0, 0, .5);
+}
+
+// ── Timeline: the X lineage ──────────────────────────────────────────────────
+// No cards. A 600px column between two hairlines, a sticky tab strip, and an
+// action bar that stays quiet until it is hovered.
+[data-cascade-preset='timeline'] {
+  --cs-feed-width:    602px;
+  --cs-rail-right:    348px;
+  --cs-gap:           0px;
+  --cs-radius:        16px;
+  --cs-media-radius:  16px;
+  --cs-media-height:  252px;
+
+  --container-hd:     1202px;
+  --container-xl:     1202px;
+  --container-xxl:    1202px;
+}
+
+[data-cascade-preset='timeline'][data-theme^='light'] {
+  --body-bg:        #FFFFFF;
+  --cs-surface:     #FFFFFF;
+  --cs-line:        #EFF3F4;
+  --cs-hover:       #F7F9F9;
+  --control-bg:     #F7F9F9;
+  --control-color:  #0F1419;
+  --text-color:     #0F1419;
+  --heading-color:  #0F1419;
+  --muted-color:    #536471;
+  --header-bg:      #FFFFFF;
+  --header-color:   #0F1419;
+  --cs-shadow:      none;
+}
+
+// Timeline's dark is the dim navy, not pure black — a single very dark mode has
+// to be readable for long sessions. Lights-out is mapped to high contrast
+// below, where a reader who wants maximum separation will actually find it.
+[data-cascade-preset='timeline'][data-theme^='dark'] {
+  --body-bg:        #15202B;
+  --cs-surface:     #15202B;
+  --cs-line:        #38444D;
+  --cs-hover:       #1C2C3A;
+  --control-bg:     #1E2D3B;
+  --control-color:  #F7F9F9;
+  --text-color:     #F7F9F9;
+  --heading-color:  #F7F9F9;
+  --muted-color:    #8B98A5;
+  --header-bg:      #15202B;
+  --header-color:   #F7F9F9;
+  --cs-shadow:      none;
+}
+
+[data-cascade-preset='timeline'][data-theme='dark-hc'] {
+  --body-bg:        #000000;
+  --cs-surface:     #000000;
+  --cs-line:        #2F3336;
+  --cs-hover:       #16181C;
+  --control-bg:     #16181C;
+  --muted-color:    #A0A6AB;
+  --header-bg:      #000000;
+}
+
+[data-cascade-preset='timeline'][data-theme='light-hc'] {
+  --cs-line:        #C4CDD3;
+  --muted-color:    #3D4B57;
+}
+
+[data-cascade-preset='wall'][data-theme='light-hc'] {
+  --cs-line:        #A9ADB4;
+  --muted-color:    #4A4D52;
+}
+
+[data-cascade-preset='wall'][data-theme='dark-hc'] {
+  --cs-line:        #6A6C6F;
+  --muted-color:    #D2D5D9;
+}
+
+// ── Derived, both presets ────────────────────────────────────────────────────
+// These reference the tokens above rather than restating colours, so a preset
+// only ever has to declare the block it owns.
+:root {
+  --discussion-title-color:        var(--heading-color);
+  --discussion-list-item-bg-hover: var(--cs-hover);
+  --avatar-bg:                     var(--control-bg);
+}

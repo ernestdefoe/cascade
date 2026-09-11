@@ -1,0 +1,37 @@
+// ============================================================================
+// Mixins
+// ============================================================================
+
+// A card in Wall, a plain region in Timeline. Every surface in the feed goes
+// through this so the preset fork stays in one place.
+.cs-surface() {
+  background: var(--cs-surface);
+  border-radius: var(--cs-radius);
+  box-shadow: var(--cs-shadow);
+}
+
+// A pill control — composer trigger, Follow button, the new-discussions pill.
+.cs-pill() {
+  border-radius: 999px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+// Cascade's own focus ring. Core's is tuned for its own controls; the feed rows
+// are much larger targets and need an offset ring to stay visible against both
+// the card and the ground.
+.cs-focus-ring() {
+  &:focus-visible {
+    outline: 2px solid var(--cs-accent);
+    outline-offset: 2px;
+    border-radius: var(--cs-radius);
+  }
+}
+
+// Clamp to N lines. Used for the excerpt and for long titles.
+.cs-clamp(@lines) {
+  display: -webkit-box;
+  -webkit-line-clamp: @lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

@@ -1,0 +1,7 @@
+js/node_modules/
+js/dist/*.map
+vendor/
+composer.lock
+.DS_Store
+Thumbs.db
+.claude/
