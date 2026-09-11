@@ -64,7 +64,7 @@ you the **post**. That one difference is what Cascade is built around.
 
 ### On a phone
 
-<img src="docs/screenshots/mobile.png" alt="Cascade on a phone" width="320">
+![Cascade on a phone](docs/screenshots/mobile-wide.png)
 
 ---
 
