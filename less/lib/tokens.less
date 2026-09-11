@@ -75,19 +75,39 @@
   --cs-shadow:      0 1px 2px rgba(0, 0, 0, .2);
 }
 
+// Dark Wall is built around one decision: the ground is a flat neutral
+// charcoal and the cards sit a step above it. Facebook's own pairing
+// (#18191A ground, #242526 cards) carries a slight blue cast in both, which is
+// what made this read as murky rather than dark - the two were close enough in
+// value to blur together, and neither was actually neutral.
+//
+// Everything below is a neutral grey ramp off @cs-ground, so the cards read as
+// raised paper and the ground reads as unlit space.
+//
+// The gap between ground and card is the whole design. Facebook's pairing is 12
+// points of value (#18191A to #242526) and relies on a blue cast in both to
+// separate them; strip the cast for a neutral ramp and 12 points is not enough
+// - the cards dissolve into the page. This ramp runs 18 points, which reads as
+// a card at a glance without turning the ground into a black void.
+@cs-ground: #121212;
+
 [data-cascade-preset='wall'][data-theme^='dark'] {
-  --body-bg:        #18191A;
-  --cs-surface:     #242526;
-  --cs-line:        #3A3B3C;
-  --cs-hover:       #3A3B3C;
-  --control-bg:     #3A3B3C;
-  --control-color:  #E4E6EB;
-  --text-color:     #E4E6EB;
-  --heading-color:  #E4E6EB;
-  --muted-color:    #B0B3B8;
-  --header-bg:      #242526;
-  --header-color:   #E4E6EB;
-  --cs-shadow:      0 1px 2px rgba(0, 0, 0, .5);
+  --body-bg:        @cs-ground;
+  --cs-surface:     #242424;
+  --cs-line:        #303030;
+  --cs-hover:       #2C2C2C;
+  --control-bg:     #2C2C2C;
+  --control-color:  #E7E9EA;
+  --text-color:     #E7E9EA;
+  --heading-color:  #F2F3F4;
+  // Lifted from Facebook's #B0B3B8: against a darker, neutral ground the old
+  // value sat just under a comfortable contrast ratio for 13px meta text.
+  --muted-color:    #A3A8AD;
+  // Between the two, so the bar reads as chrome rather than as another card.
+  --header-bg:      #1B1B1B;
+  --header-color:   #E7E9EA;
+  // A darker ground needs a deeper shadow to register at all.
+  --cs-shadow:      0 1px 2px rgba(0, 0, 0, .6);
 }
 
 // ── Timeline: the X lineage ──────────────────────────────────────────────────
@@ -160,8 +180,15 @@
 }
 
 [data-cascade-preset='wall'][data-theme='dark-hc'] {
-  --cs-line:        #6A6C6F;
+  // High contrast drops the ground to true black so the cards separate on
+  // value alone, and hardens the lines rather than relying on the shadow.
+  --body-bg:        #000000;
+  --cs-surface:     #171717;
+  --cs-line:        #5A5C5F;
+  --cs-hover:       #232323;
+  --control-bg:     #232323;
   --muted-color:    #D2D5D9;
+  --header-bg:      #0E0E0E;
 }
 
 // ── Derived, both presets ────────────────────────────────────────────────────
@@ -171,4 +198,24 @@
   --discussion-title-color:        var(--heading-color);
   --discussion-list-item-bg-hover: var(--cs-hover);
   --avatar-bg:                     var(--control-bg);
+}
+
+// The page ground, stated explicitly and at a specificity that can win.
+//
+// Core does not set a body background in its stylesheet at all - it inlines it
+// as critical CSS in <head>, so the dark background is painted before any
+// stylesheet loads and there is no flash:
+//
+//   body{margin:0;background:#fff}
+//   [data-theme^=dark] body{background:<computed from theme_secondary_color>}
+//
+// That second rule is `[data-theme^=dark] body`, specificity (0,1,1), and the
+// colour in it is derived from the forum's secondary colour - so on a forum
+// with a teal secondary the dark ground is a dark teal. Setting `--body-bg`
+// does nothing about it: nothing reads that variable for the body.
+//
+// Matching (0,1,1) and loading later is what takes it. This is also why Cascade
+// cannot simply be a palette: the ground has to be claimed.
+[data-cascade-preset] body {
+  background: var(--body-bg);
 }

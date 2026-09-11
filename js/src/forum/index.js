@@ -26,8 +26,18 @@ Discussion.prototype.cascadeFirstPostId = Model.attribute('cascadeFirstPostId');
 Discussion.prototype.cascadeReactionCounts = Model.attribute('cascadeReactionCounts');
 Discussion.prototype.cascadeUserReaction = Model.attribute('cascadeUserReaction');
 
+// Priority -100 so this initializer runs LAST.
+//
+// `extend()` wraps: each registration wraps the previous one, and a wrapper
+// calls the original before its own callback - so the callback registered LAST
+// runs LAST. Cascade needs that for `PageStructure.containerItems`, where it
+// adopts fof/forum-widgets-core's side section out of the list. If Cascade
+// registered first, FoF would add its item after Cascade had already looked for
+// it, and the forum would get a fourth column instead.
+//
+// Core sorts initializers by priority, descending.
 app.initializers.add('ernestdefoe-cascade', () => {
   decorateRow();
   addComposerTrigger();
   addRightRail();
-});
+}, -100);

@@ -182,3 +182,64 @@
     border: 2px solid var(--cs-surface);
   }
 }
+
+// ── fof/forum-widgets-core ───────────────────────────────────────────────────
+//
+// Its side ("end") section is adopted into the rail by addRightRail, so it
+// arrives as a child here rather than as a fourth column. These rules make the
+// widgets look like the rest of the rail instead of like a transplant.
+
+.Cascade-rail .FofWidgets-WidgetSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.Cascade-rail .FofWidgets {
+  .cs-surface();
+  padding: 14px 16px;
+  overflow: hidden;
+
+  // Widget headings vary by provider; give them all the rail's own heading.
+  h2, h3, h4,
+  .FofWidgets-title {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--heading-color);
+  }
+}
+
+// Safety net. The adoption above depends on Cascade's initializer running last,
+// which it does - but an extension that registers even later could add the item
+// back after Cascade has looked. If the section does end up a direct child of
+// the container, this keeps it to the rail's width instead of letting it blow
+// the row out; it simply becomes the right column, which is still correct.
+.App--index .Page-container > .FofWidgets-sideNavAlt {
+  flex: 0 0 var(--cs-rail-right);
+  min-width: 0;
+}
+
+// The start sections land inside core's IndexSidebar, so they inherit the left
+// rail. They only need room to breathe.
+.App--index .IndexPage-nav .FofWidgets-WidgetSection {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// Top and bottom sections sit inside `.container`, above and below the columns.
+// Cascade retunes that container's width, so they follow the feed automatically.
+.App--index .FofWidgets-topWidgetSection,
+.App--index .FofWidgets-bottomWidgetSection {
+  margin-bottom: var(--cs-gap);
+}
+
+.App--index .FofWidgets-bottomWidgetSection {
+  margin-top: var(--cs-gap);
+  margin-bottom: 0;
+}
