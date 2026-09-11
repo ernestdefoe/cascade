@@ -1,0 +1,259 @@
+name: Post release to Flarum support site
+
+on:
+  release:
+    types: [published]
+  # Manual / force-repost: pick a tag (or leave blank to take the latest
+  # published release on the repo). The workflow resolves the release
+  # via the API, so it works the same for both triggers.
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag to post (leave blank to use the latest published release).'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      # Resolve the release once. This makes the rest of the workflow
+      # independent of the trigger — it reads RELEASE_TAG / RELEASE_BODY
+      # / RELEASE_URL / RELEASE_NAME from $GITHUB_ENV regardless of how
+      # the run was started.
+      - name: Resolve release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          tag="${EVENT_TAG:-${INPUT_TAG:-}}"
+          if [ -z "$tag" ]; then
+            release_json=$(gh api "repos/${GH_REPO}/releases/latest")
+          else
+            release_json=$(gh api "repos/${GH_REPO}/releases/tags/${tag}")
+          fi
+
+          echo "RELEASE_TAG=$(echo "$release_json" | jq -r '.tag_name')"   >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=$(echo "$release_json" | jq -r '.name // .tag_name')" >> "$GITHUB_ENV"
+          echo "RELEASE_URL=$(echo "$release_json" | jq -r '.html_url')"  >> "$GITHUB_ENV"
+
+          delim="EOF_$(openssl rand -hex 8)"
+          {
+            printf 'RELEASE_BODY<<%s\n' "$delim"
+            echo "$release_json" | jq -r '.body // ""'
+            printf '%s\n' "$delim"
+          } >> "$GITHUB_ENV"
+
+      # Build a usable changelog. If the release body has real content,
+      # use it as-is. If it's empty or one of the known release-drafter
+      # placeholders ("No changes", "No changes made.", a lone
+      # "Full Changelog" link, etc.), fall back to enumerating commits
+      # between the previous tag and this one via the compare API.
+      - name: Build changelog
+        id: changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          stripped=$(printf '%s\n' "${RELEASE_BODY:-}" \
+            | sed -E '/^\s*$/d' \
+            | sed -E '/^##[[:space:]]+What.s Changed[[:space:]]*$/Id' \
+            | sed -E '/^\*[[:space:]]*No changes[[:space:]]*$/Id' \
+            | sed -E '/^No changes( made)?\.?[[:space:]]*$/Id' \
+            | sed -E '/^\*\*Full Changelog\*\*:.*/d' \
+            | sed -E '/^Full Changelog:.*/d')
+
+          if [ -n "$stripped" ]; then
+            echo "Release body has content — using it as-is."
+            body="$RELEASE_BODY"
+          else
+            echo "Release body is empty/placeholder — building from commits."
+
+            previous_tag=$(gh api "repos/${GH_REPO}/tags?per_page=100" \
+              --jq '[.[] | select(.name != env.RELEASE_TAG) | .name][0] // empty')
+
+            if [ -z "$previous_tag" ]; then
+              echo "No previous tag — treating as initial release."
+              body="_Initial release._"
+            else
+              echo "Comparing ${previous_tag}...${RELEASE_TAG}"
+              changelog=$(gh api --paginate \
+                "repos/${GH_REPO}/compare/${previous_tag}...${RELEASE_TAG}" \
+                --jq '[.commits[]
+                       | select((.parents | length) < 2)
+                       | "- " + (.commit.message | split("\n")[0])
+                      ] | .[:60] | join("\n")')
+
+              if [ -z "$changelog" ]; then
+                body="_No commits between ${previous_tag} and ${RELEASE_TAG}._"
+              else
+                body=$(printf '## What'"'"'s Changed\n\n%s\n\n**Full Changelog**: https://github.com/%s/compare/%s...%s\n' \
+                  "$changelog" "$GH_REPO" "$previous_tag" "$RELEASE_TAG")
+              fi
+            fi
+          fi
+
+          delim="EOF_$(openssl rand -hex 8)"
+          {
+            printf 'body<<%s\n' "$delim"
+            printf '%s\n' "$body"
+            printf '%s\n' "$delim"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post reply to support discussion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FLARUM_FORUM_URL: ${{ vars.FLARUM_FORUM_URL }}
+          FLARUM_DISCUSSION_ID: ${{ vars.FLARUM_DISCUSSION_ID }}
+          FLARUM_API_KEY: ${{ secrets.FLARUM_API_KEY }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          POST_BODY: ${{ steps.changelog.outputs.body }}
+        run: |
+          set -euo pipefail
+
+          # 🚨 Skip, do not fail, when the announcement is not configured.
+          # A repository with no support discussion is a normal state — a new
+          # extension, a private one, one that simply is not announced. Exiting
+          # 1 painted a red X on every release of every such repo, which trains
+          # people to ignore the one failure that does matter.
+          if [ -z "${FLARUM_FORUM_URL}" ] || [ -z "${FLARUM_DISCUSSION_ID}" ] || [ -z "${FLARUM_API_KEY}" ]; then
+            echo "::notice::No support discussion configured for this repository — skipping the announcement. Set the FLARUM_FORUM_URL and FLARUM_DISCUSSION_ID variables and the FLARUM_API_KEY secret to enable it."
+            exit 0
+          fi
+
+          CONTENT_MD=$(printf '## %s %s\n\n%s\n\n[View release on GitHub](%s)\n' \
+            "$REPO_NAME" "$RELEASE_TAG" "${POST_BODY:-_No release notes provided._}" "$RELEASE_URL")
+
+          # 🚨 Render to HTML before posting. Release notes are Markdown, and the
+          # support site has no Markdown extension — Scribe replaced it — so
+          # posting the raw source published literal "##" and "**bold**" as the
+          # announcement body. GitHub's own /markdown endpoint is used because it
+          # is already authenticated here, needs nothing installed, and renders
+          # the same GFM the release page shows.
+          #
+          # Falls back to the Markdown source if the render fails: a slightly
+          # ugly announcement beats no announcement.
+          #
+          # 🚨 Two attempts, then a LOUD fallback.
+          #
+          # This used to discard stderr and fall back silently, so a failed
+          # render published literal "##" and "**bold**" to the support site
+          # with nothing anywhere saying it had happened — page-builder 3.5.0
+          # is still sitting there like that. A fallback nobody can see is
+          # indistinguishable from working, which is how it survived.
+          #
+          # The retry is because the failure is intermittent: the same release
+          # notes rendered fine on other repos the same week.
+          CONTENT=""
+          for attempt in 1 2; do
+            if CONTENT=$(jq -n --arg text "$CONTENT_MD" '{text:$text, mode:"gfm"}' \
+                 | gh api --method POST /markdown --input - 2>/tmp/md-render-err.txt) \
+               && [ -n "$CONTENT" ]; then
+              break
+            fi
+            CONTENT=""
+            if [ "$attempt" = "1" ]; then sleep 3; fi
+          done
+
+          if [ -z "$CONTENT" ]; then
+            # Still posted, because a rough announcement beats none — but the run
+            # is now marked so somebody can go and fix the post.
+            echo "::warning title=Markdown render failed::Posting the Markdown SOURCE, which this site does not render — the announcement will contain literal ## and **. $(head -c 300 /tmp/md-render-err.txt 2>/dev/null | tr -s '[:space:]' ' ')"
+            CONTENT="$CONTENT_MD"
+          fi
+
+          # 🚨 <tt> is not in Scribe's allowed vocabulary, so the site ESCAPES it
+          # and the announcement shows a literal "&lt;tt&gt;" to every reader.
+          # GitHub's GFM renderer emits it unprompted: a bare compare URL is
+          # autolinked as <a class="commit-link">owner/repo@<tt>a...b</tt></a>,
+          # which is exactly the "Full Changelog" line release notes end with.
+          # <code> renders identically and is allowed.
+          # 🚨 Three more cases of the very same problem, every one of them
+          # seen in a published post. GitHub also wraps fenced code blocks in
+          # <div class="highlight..."> and tables in
+          # <markdown-accessiblity-table> (their spelling of "accessibility",
+          # so match it exactly), and it escapes `<script>` to &lt;script&gt;
+          # inside <code> — which Flarum then escapes AGAIN, so the reader is
+          # shown the entity instead of the tag. Send the literal characters
+          # and let Flarum escape them exactly once.
+          #
+          # 🚨 The captures are copied into lexicals before the inner
+          # substitutions run. Those substitutions reset $1, so building the
+          # replacement straight from $1 silently drops the opening <code>
+          # tag and leaves a stray </code> behind in the prose.
+          CONTENT=$(printf '%s' "$CONTENT" | perl -0777 -pe '
+            s|<tt>|<code>|g;
+            s|</tt>|</code>|g;
+            s|<div class="highlight[^"]*">\s*||g;
+            s|</pre>\s*</div>|</pre>|g;
+            s|</?markdown-accessiblity-table>||g;
+            #
+            # 🚨 A FENCED CODE BLOCK posts its own wrapper as visible text.
+            #
+            # Flarum renders <pre> and supplies its OWN <code>, escaping
+            # everything else inside it. GitHub emits a fence two ways, and
+            # BOTH leave tags inside the <pre> that the reader then sees as
+            # literal markup:
+            #
+            #   ```          -> <pre class="notranslate"><code class="notranslate">TEXT</code></pre>
+            #   ```php       -> <div class="highlight..."><pre class="notranslate"><span class="pl-s1">TEXT</span></pre></div>
+            #
+            # The plain form published a literal <code class="notranslate">
+            # line above the code and </code> below it — social-groups v2.5.0
+            # went out like that. The highlighted form is worse: every syntax
+            # <span> is shown as source, burying the code in markup. Nobody had
+            # hit that one only because no release notes had used a
+            # language-tagged fence yet.
+            #
+            # So reduce every fence to <pre>TEXT</pre> and let Flarum wrap it.
+            # Entities are unescaped exactly once here, because Flarum escapes
+            # what it is given — the same reason the <code> rule below does it.
+            # Highlighting still happens: Flarum loads hljs client-side.
+            #
+            # Must run BEFORE the inline-<code> rule, or that rule's non-greedy
+            # match pairs an opening <code> inside a <pre> with a closing tag
+            # outside it.
+            s{<pre[^>]*>(.*?)</pre>}{
+              my $inner = $1;
+              $inner =~ s{</?code[^>]*>}{}g;
+              $inner =~ s{</?span[^>]*>}{}g;
+              $inner =~ s{&lt;}{<}g;
+              $inner =~ s{&gt;}{>}g;
+              $inner =~ s{&amp;}{&}g;
+              "<pre>" . $inner . "</pre>";
+            }ges;
+            s{(<code[^>]*>)(.*?)</code>}{
+              my ($open, $inner) = ($1, $2);
+              $inner =~ s{&lt;}{<}g;
+              $inner =~ s{&gt;}{>}g;
+              $inner =~ s{&amp;}{&}g;
+              $open . $inner . "</code>";
+            }ges;
+            s|&amp;|&|g;
+          ')
+
+          PAYLOAD=$(jq -n \
+            --arg content "$CONTENT" \
+            --arg did "$FLARUM_DISCUSSION_ID" \
+            '{data:{type:"posts",attributes:{content:$content},relationships:{discussion:{data:{type:"discussions",id:$did}}}}}')
+
+          HTTP_CODE=$(curl -sS -o /tmp/flarum-resp.json -w '%{http_code}' \
+            -X POST "${FLARUM_FORUM_URL%/}/api/posts" \
+            -H "Authorization: Token ${FLARUM_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          echo "Flarum responded with HTTP $HTTP_CODE"
+          cat /tmp/flarum-resp.json
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            exit 1
+          fi
