@@ -57,12 +57,38 @@
   align-self: flex-start;
 }
 
-// Both rails scroll with the page until they run out of content, then stop.
-// `position: sticky` on the left rail has to be applied to the nav itself
-// rather than .Page-sidebar, because the flex item stretches to the row height.
-.App--index .IndexPage-nav {
+/*
+ * The left rail stays put while the feed scrolls.
+ *
+ * 🚨 Sticky has to be on .Page-sidebar, NOT on .IndexPage-nav inside it.
+ * `.Page-container` sets `align-items: flex-start`, which shrinks every flex
+ * item to its own content height — so the sidebar is exactly as tall as the nav
+ * and a sticky child has no room to travel inside it. The rule applies, the
+ * element never sticks, and the rail scrolls away like any other block. It
+ * looked like sticky was simply not working.
+ *
+ * Making the sidebar itself sticky is what the right rail already does, for the
+ * same reason.
+ */
+.App--index .Page-sidebar {
   position: sticky;
   top: calc(var(--header-height) + 16px);
+  align-self: flex-start;
+
+  /*
+   * A nav taller than the viewport would otherwise pin its top and bury its
+   * last items off-screen with no way to reach them. Capped to the space below
+   * the header, scrolling inside itself when it does not fit, and the scrollbar
+   * only appears when it is actually needed.
+   */
+  max-height: calc(100vh - var(--header-height) - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+// The nav no longer positions itself; the column it sits in does.
+.App--index .IndexPage-nav {
+  position: static;
 }
 
 // Core draws a vertical rule to the right of the side nav. Cascade's columns

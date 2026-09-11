@@ -33,6 +33,17 @@
     .IndexPage-nav {
       position: static;
     }
+
+    /*
+     * Undo the pinned left rail. On a phone the sidebar is a dropdown, not a
+     * column: leaving it sticky with a viewport-height cap gives the dropdown
+     * its own scrollbar and pins it over the feed.
+     */
+    .Page-sidebar {
+      position: static;
+      max-height: none;
+      overflow: visible;
+    }
   }
 
   [data-cascade-preset='timeline'] .App--index .Page-content {
