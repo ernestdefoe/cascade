@@ -60,55 +60,8 @@
   --container-xxl:    1168px;
 }
 
-[data-cascade-preset='wall'][data-theme^='light'] {
-  --body-bg:        #F0F2F5;
-  --cs-surface:     #FFFFFF;
-  --cs-line:        #CED0D4;
-  --cs-hover:       #F2F2F2;
-  --control-bg:     #E4E6EB;
-  --control-color:  #050505;
-  --text-color:     #080809;
-  --heading-color:  #080809;
-  --muted-color:    #65676B;
-  --header-bg:      #FFFFFF;
-  --header-color:   #050505;
-  --cs-shadow:      0 1px 2px rgba(0, 0, 0, .2);
-}
 
-// Dark Wall is built around one decision: the ground is a flat neutral
-// charcoal and the cards sit a step above it. Facebook's own pairing
-// (#18191A ground, #242526 cards) carries a slight blue cast in both, which is
-// what made this read as murky rather than dark - the two were close enough in
-// value to blur together, and neither was actually neutral.
-//
-// Everything below is a neutral grey ramp off @cs-ground, so the cards read as
-// raised paper and the ground reads as unlit space.
-//
-// The gap between ground and card is the whole design. Facebook's pairing is 12
-// points of value (#18191A to #242526) and relies on a blue cast in both to
-// separate them; strip the cast for a neutral ramp and 12 points is not enough
-// - the cards dissolve into the page. This ramp runs 18 points, which reads as
-// a card at a glance without turning the ground into a black void.
-@cs-ground: #121212;
 
-[data-cascade-preset='wall'][data-theme^='dark'] {
-  --body-bg:        @cs-ground;
-  --cs-surface:     #242424;
-  --cs-line:        #303030;
-  --cs-hover:       #2C2C2C;
-  --control-bg:     #2C2C2C;
-  --control-color:  #E7E9EA;
-  --text-color:     #E7E9EA;
-  --heading-color:  #F2F3F4;
-  // Lifted from Facebook's #B0B3B8: against a darker, neutral ground the old
-  // value sat just under a comfortable contrast ratio for 13px meta text.
-  --muted-color:    #A3A8AD;
-  // Between the two, so the bar reads as chrome rather than as another card.
-  --header-bg:      #1B1B1B;
-  --header-color:   #E7E9EA;
-  // A darker ground needs a deeper shadow to register at all.
-  --cs-shadow:      0 1px 2px rgba(0, 0, 0, .6);
-}
 
 // ── Stream: the Bluesky lineage ──────────────────────────────────────────────
 // Hairline rows like Timeline, but the separators are INSET to the content
@@ -131,53 +84,9 @@
   --container-xxl:    1180px;
 }
 
-[data-cascade-preset='stream'][data-theme^='light'] {
-  --body-bg:        #FFFFFF;
-  --cs-surface:     #FFFFFF;
-  --cs-line:        #D4DBE2;
-  --cs-hover:       #F1F3F5;
-  --control-bg:     #F1F3F5;
-  --control-color:  #0B0F14;
-  --text-color:     #0B0F14;
-  --heading-color:  #0B0F14;
-  --muted-color:    #42576C;
-  --header-bg:      #FFFFFF;
-  --header-color:   #0B0F14;
-  --cs-shadow:      none;
-}
 
-// Bluesky's dim, not its lights-out: a cool slate rather than Timeline's navy
-// or Wall's neutral charcoal. Surface and ground are the same value on purpose
-// — the separators do all the dividing here, which is the point of the lineage.
-[data-cascade-preset='stream'][data-theme^='dark'] {
-  --body-bg:        #161E27;
-  --cs-surface:     #161E27;
-  --cs-line:        #2E4052;
-  --cs-hover:       #1E2936;
-  --control-bg:     #1E2936;
-  --control-color:  #F1F3F5;
-  --text-color:     #F1F3F5;
-  --heading-color:  #FFFFFF;
-  --muted-color:    #8D98A6;
-  --header-bg:      #161E27;
-  --header-color:   #F1F3F5;
-  --cs-shadow:      none;
-}
 
-[data-cascade-preset='stream'][data-theme='dark-hc'] {
-  --body-bg:        #000000;
-  --cs-surface:     #000000;
-  --cs-line:        #21303F;
-  --cs-hover:       #0D1520;
-  --control-bg:     #0D1520;
-  --muted-color:    #A6B0BC;
-  --header-bg:      #000000;
-}
 
-[data-cascade-preset='stream'][data-theme='light-hc'] {
-  --cs-line:        #B3BFCB;
-  --muted-color:    #2B3B4A;
-}
 
 // ── Timeline: the X lineage ──────────────────────────────────────────────────
 // No cards. A 600px column between two hairlines, a sticky tab strip, and an
@@ -195,70 +104,11 @@
   --container-xxl:    1202px;
 }
 
-[data-cascade-preset='timeline'][data-theme^='light'] {
-  --body-bg:        #FFFFFF;
-  --cs-surface:     #FFFFFF;
-  --cs-line:        #EFF3F4;
-  --cs-hover:       #F7F9F9;
-  --control-bg:     #F7F9F9;
-  --control-color:  #0F1419;
-  --text-color:     #0F1419;
-  --heading-color:  #0F1419;
-  --muted-color:    #536471;
-  --header-bg:      #FFFFFF;
-  --header-color:   #0F1419;
-  --cs-shadow:      none;
-}
 
-// Timeline's dark is the dim navy, not pure black — a single very dark mode has
-// to be readable for long sessions. Lights-out is mapped to high contrast
-// below, where a reader who wants maximum separation will actually find it.
-[data-cascade-preset='timeline'][data-theme^='dark'] {
-  --body-bg:        #15202B;
-  --cs-surface:     #15202B;
-  --cs-line:        #38444D;
-  --cs-hover:       #1C2C3A;
-  --control-bg:     #1E2D3B;
-  --control-color:  #F7F9F9;
-  --text-color:     #F7F9F9;
-  --heading-color:  #F7F9F9;
-  --muted-color:    #8B98A5;
-  --header-bg:      #15202B;
-  --header-color:   #F7F9F9;
-  --cs-shadow:      none;
-}
 
-[data-cascade-preset='timeline'][data-theme='dark-hc'] {
-  --body-bg:        #000000;
-  --cs-surface:     #000000;
-  --cs-line:        #2F3336;
-  --cs-hover:       #16181C;
-  --control-bg:     #16181C;
-  --muted-color:    #A0A6AB;
-  --header-bg:      #000000;
-}
 
-[data-cascade-preset='timeline'][data-theme='light-hc'] {
-  --cs-line:        #C4CDD3;
-  --muted-color:    #3D4B57;
-}
 
-[data-cascade-preset='wall'][data-theme='light-hc'] {
-  --cs-line:        #A9ADB4;
-  --muted-color:    #4A4D52;
-}
 
-[data-cascade-preset='wall'][data-theme='dark-hc'] {
-  // High contrast drops the ground to true black so the cards separate on
-  // value alone, and hardens the lines rather than relying on the shadow.
-  --body-bg:        #000000;
-  --cs-surface:     #171717;
-  --cs-line:        #5A5C5F;
-  --cs-hover:       #232323;
-  --control-bg:     #232323;
-  --muted-color:    #D2D5D9;
-  --header-bg:      #0E0E0E;
-}
 
 // ── Derived, both presets ────────────────────────────────────────────────────
 // These reference the tokens above rather than restating colours, so a preset
@@ -287,4 +137,141 @@
 // cannot simply be a palette: the ground has to be claimed.
 [data-cascade-preset] body {
   background: var(--body-bg);
+}
+
+// ── Colour: one graphite ramp, shared by every preset ────────────────────────
+//
+// The presets used to carry their lineage's brand palette too — Facebook's
+// blue-grey, X's navy, Bluesky's slate. That made the resemblance louder than
+// it needed to be, and it meant three colour systems to keep legible across
+// four theme modes instead of one.
+//
+// They now share a single NEUTRAL graphite ramp and are told apart by their
+// structure alone: cards on a tinted ground, hairline rows, or inset rows. That
+// is the part that actually changes how a feed reads.
+//
+// The ramp has no hue. A grey with a cast reads as "almost blue" next to the
+// forum's accent and fights it; a true neutral lets the accent be the only
+// colour on the page, which is what makes an accent work.
+@g-white:   #FFFFFF;
+@g-100:     #F4F5F6;
+@g-150:     #ECEDEF;
+@g-200:     #DEE0E3;
+@g-300:     #C7CACE;
+@g-ink:     #1A1C1E;
+@g-muted:   #5B6166;
+
+@g-950:     #131415;  // Wall's ground: the unlit space behind the cards
+@g-900:     #1A1B1D;  // the row presets' ground and surface both
+@g-850:     #202225;  // Wall's cards
+@g-800:     #26282B;  // hover
+@g-line-d:  #303337;
+@g-ink-d:   #E7E9EA;
+@g-muted-d: #9AA0A6;
+
+// ── Wall: cards, so the ground and the surface must differ ───────────────────
+//
+// 🚨 The gap between them is the whole design, and it has to be bigger than it
+// looks like it should be. Facebook's own pairing is 12 points of value and
+// leans on a blue cast in both to separate them; strip the cast for a true
+// neutral and 12 points is not enough — the cards dissolve into the page. This
+// ramp runs 18 points (#131415 to #202225), which reads as a raised card at a
+// glance without turning the ground into a black void.
+[data-cascade-preset='wall'][data-theme^='light'] {
+  --body-bg:        @g-100;
+  --cs-surface:     @g-white;
+  --cs-line:        @g-200;
+  --cs-hover:       @g-150;
+  --control-bg:     @g-150;
+  --control-color:  @g-ink;
+  --text-color:     @g-ink;
+  --heading-color:  @g-ink;
+  --muted-color:    @g-muted;
+  --header-bg:      @g-white;
+  --header-color:   @g-ink;
+  --cs-shadow:      0 1px 2px rgba(0, 0, 0, .18);
+}
+
+[data-cascade-preset='wall'][data-theme^='dark'] {
+  --body-bg:        @g-950;
+  --cs-surface:     @g-850;
+  --cs-line:        @g-line-d;
+  --cs-hover:       @g-800;
+  --control-bg:     @g-800;
+  --control-color:  @g-ink-d;
+  --text-color:     @g-ink-d;
+  --heading-color:  #F2F3F4;
+  --muted-color:    @g-muted-d;
+  // Between the two, so the bar reads as chrome rather than as another card.
+  --header-bg:      #1B1D1F;
+  --header-color:   @g-ink-d;
+  // A darker ground needs a deeper shadow to register at all.
+  --cs-shadow:      0 1px 2px rgba(0, 0, 0, .6);
+}
+
+// ── Timeline and Stream: no cards, so ground and surface are the same ────────
+// The separators do all the dividing. Giving the rows a surface of their own
+// would put a card back under them, which is the thing these two are not.
+[data-cascade-preset='timeline'][data-theme^='light'],
+[data-cascade-preset='stream'][data-theme^='light'] {
+  --body-bg:        @g-white;
+  --cs-surface:     @g-white;
+  --cs-line:        @g-200;
+  --cs-hover:       @g-150;
+  --control-bg:     @g-150;
+  --control-color:  @g-ink;
+  --text-color:     @g-ink;
+  --heading-color:  @g-ink;
+  --muted-color:    @g-muted;
+  --header-bg:      @g-white;
+  --header-color:   @g-ink;
+  --cs-shadow:      none;
+}
+
+[data-cascade-preset='timeline'][data-theme^='dark'],
+[data-cascade-preset='stream'][data-theme^='dark'] {
+  --body-bg:        @g-900;
+  --cs-surface:     @g-900;
+  --cs-line:        #2B2E31;
+  --cs-hover:       #232528;
+  --control-bg:     #232528;
+  --control-color:  @g-ink-d;
+  --text-color:     @g-ink-d;
+  --heading-color:  #F5F6F7;
+  --muted-color:    @g-muted-d;
+  --header-bg:      @g-900;
+  --header-color:   @g-ink-d;
+  --cs-shadow:      none;
+}
+
+// ── High contrast ────────────────────────────────────────────────────────────
+// rc.8 ships four modes with a real user preference behind them. A reader who
+// asked for maximum separation gets true black and a brighter muted tone; one
+// who asked for high-contrast light gets a darker rule and darker meta text.
+[data-cascade-preset='wall'][data-theme='dark-hc'],
+[data-cascade-preset='timeline'][data-theme='dark-hc'],
+[data-cascade-preset='stream'][data-theme='dark-hc'] {
+  --body-bg:        #000000;
+  --cs-line:        #2A2D30;
+  --cs-hover:       #141618;
+  --control-bg:     #141618;
+  --muted-color:    #ADB3B8;
+  --header-bg:      #000000;
+}
+
+// Wall still needs its cards to lift off a black ground.
+[data-cascade-preset='wall'][data-theme='dark-hc'] {
+  --cs-surface:     #17191B;
+}
+
+[data-cascade-preset='timeline'][data-theme='dark-hc'],
+[data-cascade-preset='stream'][data-theme='dark-hc'] {
+  --cs-surface:     #000000;
+}
+
+[data-cascade-preset='wall'][data-theme='light-hc'],
+[data-cascade-preset='timeline'][data-theme='light-hc'],
+[data-cascade-preset='stream'][data-theme='light-hc'] {
+  --cs-line:        #B9BEC3;
+  --muted-color:    #3A3F44;
 }
