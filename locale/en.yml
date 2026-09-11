@@ -29,9 +29,18 @@ ernestdefoe-cascade:
       share_copied: "Link copied"
       media_more: "+{count}"
       view_replies: "{count, plural, one {View # more reply} other {View all # replies}}"
-      hide_replies: "Hide replies"
       see_more: "See more"
+      see_less: "See less"
+      open_post: "Open this discussion"
+      see_more_loading: "Loading…"
       replies_failed: "Could not load the replies. Try again in a moment."
+
+    modal:
+      title: "{username}'s post"
+      replies_title: "{count, plural, one {# reply} other {# replies}}"
+      no_replies: "No replies yet."
+      reply_button: "Write a reply"
+      open_full: "Open full page"
 
     rail:
       trending_title: "Trending"

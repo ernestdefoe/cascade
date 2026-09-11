@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
 
 /**
- * Per-discussion expansion state for the feed cards.
+ * Per-discussion state for the feed cards.
  *
  * This lives at module scope rather than on a component instance for a
  * structural reason: DiscussionListItem guards its own updates with a
@@ -19,11 +19,15 @@ let v = 0;
 /**
  * State for one discussion, created on first use.
  *
+ * `showFullPost` and the loaded posts are deliberately separate. "See more"
+ * expands the opening post in place; the reply link opens the modal. Both need
+ * the same request, neither should trigger the other's UI.
+ *
  * @param {string} id
  */
 export function replyState(id) {
   if (!states.has(id)) {
-    states.set(id, { expanded: false, loading: false, posts: [], firstPost: null });
+    states.set(id, { showFullPost: false, loading: false, loaded: false, posts: [], firstPost: null });
   }
 
   return states.get(id);
@@ -41,31 +45,29 @@ export function version() {
 }
 
 /**
- * Open a discussion in place: the full opening post, then every reply.
+ * Fetch the discussion's posts.
  *
- * One request serves both. `filter[discussion]` sorted by number returns the
- * opening post first, so the same payload that carries the replies also
- * carries the full text of the post the card was showing a truncated excerpt
- * of — which is the whole point. Expanding the comments while leaving the
- * original clipped at 280 characters reads backwards.
+ * One request serves both callers. `filter[discussion]` sorted by number
+ * returns the opening post first, so the same payload that carries the replies
+ * also carries the full text of the post the card was showing a truncated
+ * excerpt of.
+ *
+ * @returns {Promise} resolves once the state is populated
  */
-export function expand(discussion) {
+export function load(discussion) {
   const state = replyState(discussion.id());
 
-  state.expanded = true;
-
-  // Fetched once per discussion per page view. Re-expanding after a collapse
-  // reuses what is already in hand rather than asking again for a
-  // conversation that has not moved.
-  if (state.loading || state.posts.length || state.firstPost) {
-    bump();
-    return;
+  // Fetched once per discussion per page view. Re-opening reuses what is
+  // already in hand rather than asking again for a conversation that has not
+  // moved.
+  if (state.loaded || state.loading) {
+    return Promise.resolve(state);
   }
 
   state.loading = true;
   bump();
 
-  app.store
+  return app.store
     .find('posts', {
       filter: { discussion: discussion.id() },
       page: { limit: 50 },
@@ -79,17 +81,51 @@ export function expand(discussion) {
       // is the opening post.
       state.posts = comments.filter((post) => post.number() !== 1);
       state.loading = false;
+      state.loaded = true;
       bump();
+
+      return state;
     })
-    .catch(() => {
+    .catch((e) => {
       state.loading = false;
-      state.expanded = false;
       bump();
       app.alerts.show({ type: 'error' }, app.translator.trans('ernestdefoe-cascade.forum.row.replies_failed'));
+
+      throw e;
     });
 }
 
-export function collapse(discussion) {
-  replyState(discussion.id()).expanded = false;
+/**
+ * "See more": show the whole opening post in the card, in place.
+ */
+export function seeMore(discussion) {
+  replyState(discussion.id()).showFullPost = true;
   bump();
+
+  return load(discussion).catch(() => {
+    replyState(discussion.id()).showFullPost = false;
+    bump();
+  });
+}
+
+/**
+ * "See less": collapse the post's text back to its excerpt. The loaded posts
+ * stay in hand, so re-expanding is instant.
+ */
+export function seeLess(discussion) {
+  replyState(discussion.id()).showFullPost = false;
+  bump();
+}
+
+/**
+ * Open the conversation as a modal over the feed.
+ *
+ * Facebook's model: the comment link does not navigate, it lifts the post over
+ * the timeline you were reading. The loader starts first so the modal opens
+ * with data already arriving rather than after it.
+ */
+export function openModal(discussion) {
+  load(discussion).catch(() => {});
+
+  app.modal.show(() => import('./components/DiscussionModal'), { discussion });
 }

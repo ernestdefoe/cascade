@@ -27,20 +27,9 @@
     background: var(--cs-surface);
   }
 
-  // Only the author line sits beside the avatar; everything below runs the
-  // full width of the card, the way a shared post does.
-  .DiscussionListItem-main,
-  .Cascade-body,
-  .DiscussionListItem-stats,
-  .Cascade-engagement,
-  .Cascade-replies {
-    // Longhand on purpose: LESS parses `grid-column: 1 / -1` as division
-    // and emits `-1`, which places the item on the LAST grid line instead
-    // of spanning the row - every element below the author line then
-    // collapsed into a zero-width implicit column.
-    grid-column-start: 1;
-    grid-column-end: -1;
-  }
+  // Nothing to place: row.less already spans every child across both columns,
+  // which is exactly the Wall shape - only the author line sits beside the
+  // avatar, and everything below runs the full width of the card.
 
   .DiscussionListItem-main {
     margin-top: 9px;

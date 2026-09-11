@@ -19,6 +19,11 @@ return [
     // -- Frontend ------------------------------------------------------------
     (new Extend\Frontend('forum'))
         ->js(__DIR__.'/js/dist/forum.js')
+        // Cascade lazy-loads the conversation modal, which webpack emits as a
+        // separate chunk under js/dist/forum/. Without this the chunk is never
+        // served, the dynamic import hangs unresolved, and the modal shows a
+        // spinner forever with nothing in the console to explain it.
+        ->jsDirectory(__DIR__.'/js/dist/forum')
         ->css(__DIR__.'/less/forum.less')
         // Stamp the active preset onto <html>, the same way core stamps
         // `data-theme` and `data-colored-header`. Doing it server-side matters

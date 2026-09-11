@@ -32,18 +32,22 @@
 
   // The avatar spans the whole row and the content runs beside it, top to
   // bottom - the shape that makes a timeline read as one conversation per row.
-  .Cascade-avatar {
-    // Longhand: see the note in wall.less - LESS treats `1 / -1` as maths.
-    grid-row-start: 1;
-    grid-row-end: -1;
+  // The avatar spans the whole row and everything else runs beside it, top to
+  // bottom - the shape that makes a timeline read as one conversation per row.
+  //
+  // Column 2 is set on EVERY child rather than a named list, for the same
+  // reason row.less spans them all: an element contributed by another
+  // extension has to land somewhere sensible without Cascade knowing its name.
+  .DiscussionListItem-content > * {
+    grid-column-start: 2;
+    grid-column-end: -1;
   }
 
-  .DiscussionListItem-main,
-  .Cascade-body,
-  .DiscussionListItem-stats,
-  .Cascade-engagement,
-  .Cascade-replies {
-    grid-column: 2;
+  .Cascade-avatar {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 1;
+    grid-row-end: -1;
   }
 
   .DiscussionListItem-title {

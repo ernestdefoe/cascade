@@ -15,7 +15,7 @@ import addRightRail from './addRightRail';
 // Declaring them on the model is what makes `discussion.cascadeExcerpt()`
 // work — without this they sit in the JSON and stay invisible to the frontend.
 Discussion.prototype.cascadeExcerpt = Model.attribute('cascadeExcerpt');
-Discussion.prototype.cascadeImage = Model.attribute('cascadeImage');
+Discussion.prototype.cascadeImages = Model.attribute('cascadeImages');
 Discussion.prototype.cascadeImageCount = Model.attribute('cascadeImageCount');
 Discussion.prototype.cascadeLastReply = Model.attribute('cascadeLastReply');
 

@@ -8,12 +8,13 @@
 
 .Cascade-engagement {
   display: flex;
-  align-items: stretch;
-  margin-top: 6px;
-  padding-top: 4px;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--cs-line);
 
   &-action {
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -48,13 +49,9 @@
 // ── The reaction control ─────────────────────────────────────────────────────
 
 .Cascade-react {
-  flex: 1;
+  flex: 0 1 auto;
   display: flex;
   position: relative;
-
-  .Cascade-react-button {
-    flex: 1;
-  }
 }
 
 // The applied reaction's emoji replaces the outline icon, and gets a small
@@ -170,57 +167,43 @@
   100% { transform: scale(1); }
 }
 
-// ── The summary strip ────────────────────────────────────────────────────────
+// ── Reaction pips ────────────────────────────────────────────────────────────
+//
+// Stacked at the right-hand end of the action bar, the way a social card puts
+// them - not on a strip of their own above it.
 
-// Reaction pips on the left, core's reply count on the right, one line - the
-// way a social card reads. They are separate grid items, so the summary is
-// given a fixed height and the stats row is pulled back up onto it by exactly
-// that amount. Deterministic because both are fixed-size: a 20px pip row plus
-// 8px of padding.
-.Cascade-reactSummary {
-  display: flex;
+.Cascade-reactPips {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  height: 20px;
-  padding-bottom: 8px;
-  box-sizing: content-box;
+  gap: 5px;
+  margin-inline-start: auto;
+  padding-inline-start: 8px;
   color: var(--muted-color);
-  font-size: 13.5px;
+  font-size: 13px;
+  flex: 0 0 auto;
+}
 
-  &-pips {
-    display: inline-flex;
-    align-items: center;
-  }
+.Cascade-reactPip {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--cs-surface);
+  border: 2px solid var(--cs-surface);
+  box-shadow: 0 0 0 1px var(--cs-line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
 
-  &-pip {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--cs-surface);
-    border: 2px solid var(--cs-surface);
-    box-shadow: 0 0 0 1px var(--cs-line);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    line-height: 1;
-
-    // Overlap, newest in front, the way a stacked reaction row reads.
-    & + & {
-      margin-inline-start: -6px;
-    }
-  }
-
-  &-count {
-    font-variant-numeric: tabular-nums;
+  // Overlap, the way a stacked reaction row reads.
+  & + & {
+    margin-inline-start: -6px;
   }
 }
 
-// When a summary is present the two share a line and the summary carries no
-// divider of its own; the stats row below it still draws the rule.
-.Cascade-reactSummary + .DiscussionListItem-stats {
-  margin-top: -28px;
+.Cascade-reactPips-count {
+  font-variant-numeric: tabular-nums;
 }
 
 // The picker overhangs the top of the card, so the row it belongs to has to
@@ -229,14 +212,15 @@
   z-index: 20;
 }
 
-// Timeline runs tighter: smaller pips, no labelled buttons.
+// Timeline runs tighter: no divider above the bar, smaller pips.
 [data-cascade-preset='timeline'] {
-  .Cascade-reactSummary {
-    font-size: 12.5px;
+  .Cascade-engagement {
+    border-top: 0;
+    padding-top: 0;
   }
 
-  .Cascade-react {
-    flex: 0 0 auto;
+  .Cascade-reactPips {
+    font-size: 12px;
   }
 }
 

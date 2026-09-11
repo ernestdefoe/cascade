@@ -7,23 +7,25 @@ import username from 'flarum/common/helpers/username';
 import humanTime from 'flarum/common/utils/humanTime';
 
 import CascadeReplies from './components/CascadeReplies';
+import MediaMosaic from './components/MediaMosaic';
 import ReactionControl from './components/ReactionControl';
-import { setting } from './settings';
-import { replyState, expand, version } from './repliesState';
+import { postPlainText } from './postContent';
 import { reactionById, reactionGlyph } from './reactions';
+import { replyState, seeMore, seeLess, openModal, version } from './repliesState';
+import { setting } from './settings';
 
 /**
  * Turn core's discussion list row into a feed card.
  *
  * This ADDS to DiscussionListItem's ItemLists rather than replacing the
- * component. Core's own items — the author column, the title, the info line
+ * component. Core's own items - the author column, the title, the info line
  * (where flarum/tags puts its labels and core puts the terminal post), the
- * stats — all stay where they are, which is what lets tags, best-answer,
+ * stats - all stay where they are, which is what lets tags, best-answer,
  * sticky, locked and every other list decorator keep working untouched.
  *
- * The row becomes a two-column grid: the avatar in column one, everything
- * else in column two. Wall lets the content run full width under the avatar;
- * Timeline has the avatar span every row. Both live in the preset stylesheets.
+ * The row becomes a two-column grid: the avatar in column one, everything else
+ * in column two. Which rows sit beside the avatar is the presets' business;
+ * see less/presets/.
  */
 export default function decorateRow() {
   // String path rather than a prototype reference: core's `extend()` resolves
@@ -39,38 +41,24 @@ export default function decorateRow() {
     if (density !== 'title') {
       const body = bodyView(discussion, density);
 
-      if (body) {
-        items.add('cascadeBody', body, 75);
-      }
-    }
-
-    const summary = reactionSummary(discussion);
-
-    if (summary) {
-      // 71 puts it directly before core's stats item (70), which is what
-      // lets the two share one line - see feed/engagement.less.
-      items.add('cascadeReactionSummary', summary, 71);
+      if (body) items.add('cascadeBody', body, 75);
     }
 
     items.add('cascadeEngagement', engagementView(discussion), 60);
-
     items.add('cascadeReplies', <CascadeReplies discussion={discussion} />, 55);
   });
 
-  // The row must repaint when its like/reply counts change, and
-  // DiscussionListItem freezes its own subtree behind a SubtreeRetainer keyed
-  // on `discussion.freshness`. Anything Cascade renders that can change
-  // without a freshness bump has to be declared to that retainer, or the state
-  // updates and the DOM never follows — which looks exactly like an unwired
-  // control.
+  // The row must repaint when any of this changes, and DiscussionListItem
+  // freezes its own subtree behind a SubtreeRetainer keyed on
+  // `discussion.freshness`. Anything Cascade renders that can change without a
+  // freshness bump has to be declared to that retainer, or the state updates
+  // and the DOM never follows - which looks exactly like an unwired control.
   extend('flarum/forum/components/DiscussionListItem', 'oninit', function () {
     this.subtree.check(
       () => this.attrs.discussion.cascadeExcerpt(),
       () => this.attrs.discussion.cascadeLastReply(),
       () => this.attrs.discussion.commentCount(),
       () => this.attrs.discussion.cascadeUserReaction(),
-      // Expanding or collapsing replies changes nothing the retainer would
-      // otherwise notice, so the state module exposes a counter for it.
       () => version()
     );
   });
@@ -106,30 +94,29 @@ function authorView(discussion) {
 }
 
 /**
- * The body of the card.
+ * The body of the card: the post's text, then its images.
  *
- * Collapsed, this is the server-computed excerpt plus one image - cheap enough
- * to render twenty of. Once the card is expanded it becomes the real opening
- * post, rendered exactly as the discussion page renders it, images and all.
- * Expanding the replies while leaving the post itself clipped at 280
- * characters reads backwards: you would be reading answers to something you
- * cannot see.
+ * "See more" sits INLINE at the end of the truncated text rather than on a line
+ * of its own - it is the continuation of the sentence it interrupts, and giving
+ * it its own row reads as a separate control.
+ *
+ * It expands the text and nothing else. Deliberately the post's PLAIN text, not
+ * its rendered HTML: rendering the real post here would bring its own inline
+ * images and formatting with it and replace the card's mosaic, so a card
+ * showing five tiled photos would suddenly be showing raw markup instead.
+ * Expanding grows what is already there; it does not exchange it for something
+ * else. (The modal does show the real rendered post - there, that is the point.)
  */
 function bodyView(discussion, density) {
   const state = replyState(discussion.id());
-
-  if (state.expanded && state.firstPost) {
-    return (
-      <div className="Cascade-body Cascade-body--full">
-        <div className="Cascade-post">{m.trust(state.firstPost.contentHtml() || '')}</div>
-      </div>
-    );
-  }
+  const full = state.showFullPost && state.firstPost ? postPlainText(state.firstPost.contentHtml()) : null;
 
   const excerpt = discussion.cascadeExcerpt();
-  const image = density === 'excerpt_media' ? discussion.cascadeImage() : null;
+  const text = full || excerpt;
+  const images = (discussion.cascadeImages && discussion.cascadeImages()) || [];
+  const hasMedia = density === 'excerpt_media' && images.length > 0;
 
-  if (!excerpt && !image) return null;
+  if (!text && !hasMedia) return null;
 
   // The backend appends an ellipsis only when it actually cut something, so
   // this is a reliable "there is more to read" signal rather than a guess.
@@ -137,54 +124,63 @@ function bodyView(discussion, density) {
 
   return (
     <div className="Cascade-body">
-      {excerpt ? <p className="Cascade-excerpt">{excerpt}</p> : null}
+      {text ? (
+        <p className={'Cascade-excerpt' + (full ? ' Cascade-excerpt--full' : '')}>
+          {text}
 
-      {truncated && (
-        <button type="button" className="Cascade-seeMore Button--ua-reset" onclick={() => expand(discussion)}>
-          {app.translator.trans('ernestdefoe-cascade.forum.row.see_more')}
-        </button>
-      )}
+          {truncated && !full && (
+            <button type="button" className="Cascade-seeMore Button--ua-reset" onclick={() => seeMore(discussion)}>
+              {state.loading
+                ? app.translator.trans('ernestdefoe-cascade.forum.row.see_more_loading')
+                : app.translator.trans('ernestdefoe-cascade.forum.row.see_more')}
+            </button>
+          )}
 
-      {image ? mediaView(discussion, image) : null}
+          {full && (
+            <button type="button" className="Cascade-seeMore Button--ua-reset" onclick={() => seeLess(discussion)}>
+              {app.translator.trans('ernestdefoe-cascade.forum.row.see_less')}
+            </button>
+          )}
+        </p>
+      ) : null}
+
+      {hasMedia ? <MediaMosaic discussion={discussion} /> : null}
     </div>
-  );
-}
-
-function mediaView(discussion, image) {
-  const count = discussion.cascadeImageCount() || 1;
-
-  return (
-    <Link className="Cascade-media" href={app.route.discussion(discussion)} tabindex="-1" aria-hidden="true">
-      {/* Decorative: the discussion title already names the link, and alt text
-          repeating it would be read twice. loading=lazy matters here — a page
-          of twenty rows is otherwise twenty full-size images at once. */}
-      <img src={image} alt="" loading="lazy" decoding="async" />
-      {count > 1 ? <span className="Cascade-media-more">+{count - 1}</span> : null}
-    </Link>
   );
 }
 
 /**
  * The feed row's engagement bar.
  *
- * The reaction control appears only when fof/reactions is enabled, because
- * that is the only case where `cascadeFirstPostId` exists to act on. Cascade
- * ships no reactions of its own, and a reaction button with nothing behind it
- * would be worse than no button at all.
+ * Shaped like a social card's: each action carries its own count, and the
+ * stacked reaction pips sit at the right-hand end of the same row rather than
+ * on a strip above it.
+ *
+ * The reaction control appears only when fof/reactions is enabled, because that
+ * is the only case where `cascadeFirstPostId` exists to act on. Cascade ships no
+ * reactions of its own, and a reaction button with nothing behind it would be
+ * worse than no button at all.
  */
 function engagementView(discussion) {
   const canReact = Boolean(discussion.cascadeFirstPostId && discussion.cascadeFirstPostId());
+  const replies = Math.max(0, discussion.commentCount() - 1);
 
   return (
     <div className="Cascade-engagement">
       {canReact && <ReactionControl discussion={discussion} />}
 
-      <Link className="Cascade-engagement-action" data-cs-action="reply" href={app.route.discussion(discussion)}>
+      <button
+        type="button"
+        className="Cascade-engagement-action Button--ua-reset"
+        data-cs-action="reply"
+        onclick={() => openModal(discussion)}
+      >
         <Icon name="far fa-comment" />
         <span className="Cascade-engagement-label">
           {app.translator.trans('ernestdefoe-cascade.forum.row.reply_button')}
         </span>
-      </Link>
+        {replies > 0 && <span className="Cascade-engagement-count">{replies}</span>}
+      </button>
 
       <button
         type="button"
@@ -197,16 +193,17 @@ function engagementView(discussion) {
           {app.translator.trans('ernestdefoe-cascade.forum.row.share_button')}
         </span>
       </button>
+
+      {reactionPips(discussion)}
     </div>
   );
 }
 
 /**
- * The stacked reaction pips and total that sit above the divider - the row a
- * social card shows over its action bar. Rendered only when somebody has
- * actually reacted, so a quiet discussion gets no empty strip.
+ * The stacked reaction emoji at the right end of the bar. Rendered only when
+ * somebody has actually reacted, so a quiet discussion gets no empty space.
  */
-function reactionSummary(discussion) {
+function reactionPips(discussion) {
   const counts = discussion.cascadeReactionCounts && discussion.cascadeReactionCounts();
 
   if (!counts) return null;
@@ -221,23 +218,23 @@ function reactionSummary(discussion) {
   const total = entries.reduce((n, e) => n + e.count, 0);
 
   return (
-    <div className="Cascade-reactSummary">
-      <span className="Cascade-reactSummary-pips" aria-hidden="true">
-        {entries.slice(0, 3).map((e) => (
-          <span className="Cascade-reactSummary-pip" key={e.reaction.id()}>
-            {reactionGlyph(e.reaction)}
-          </span>
-        ))}
-      </span>
-      <span className="Cascade-reactSummary-count">{total}</span>
-    </div>
+    <span className="Cascade-reactPips">
+      {entries.slice(0, 3).map((e) => (
+        <span className="Cascade-reactPip" key={e.reaction.id()} aria-hidden="true">
+          {reactionGlyph(e.reaction)}
+        </span>
+      ))}
+      <span className="Cascade-reactPips-count">{total}</span>
+    </span>
   );
 }
 
 /**
- * Copy the discussion's permalink. `navigator.clipboard` needs a secure
- * context, which a forum served over plain HTTP is not — so a failure falls
- * back to prompting with the URL rather than silently doing nothing.
+ * Copy the discussion's permalink.
+ *
+ * `navigator.clipboard` needs a secure context, which a forum served over plain
+ * HTTP is not - so a failure falls back to prompting with the URL rather than
+ * silently doing nothing.
  */
 function share(e, discussion) {
   e.preventDefault();

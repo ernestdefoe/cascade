@@ -59,10 +59,19 @@
   padding: var(--cs-row-pad-y) var(--cs-row-pad-x);
   color: var(--text-color);
 
-  // Core sets `flex-grow/shrink: 0` on every child for its flex layout. In a
-  // grid that does nothing, but a grid item's default `min-width: auto` will
-  // happily blow the column out on a long unbroken word, so pin it.
+  // EVERY child spans the full row by default, and only the avatar and author
+  // line opt out of that below.
+  //
+  // This matters more than it looks. The discussion row is an ItemList any
+  // extension can add to - participant avatars, badges, a best-answer flag -
+  // and a grid item with no placement auto-flows into the first free cell,
+  // which here is the 40px avatar column. Listing the known children instead
+  // would silently crush anything Cascade had not been told about: the row
+  // would look fine on most discussions and mangled on the ones that happen
+  // to have an extra element, which is exactly the kind of bug that ships.
   > * {
+    grid-column-start: 1;
+    grid-column-end: -1;
     min-width: 0;
   }
 }
@@ -75,7 +84,8 @@
 }
 
 .Cascade-avatar {
-  grid-column: 1;
+  grid-column-start: 1;
+  grid-column-end: 2;
   grid-row: 1;
   display: block;
 
@@ -86,7 +96,8 @@
 }
 
 .Cascade-author {
-  grid-column: 2;
+  grid-column-start: 2;
+  grid-column-end: -1;
   grid-row: 1;
   align-self: center;
   min-width: 0;
@@ -128,10 +139,59 @@
 
 // ── Title, tags, excerpt ─────────────────────────────────────────────────────
 
+// Core renders the title first, then the info line beneath it. Cascade flips
+// that visually: the tag pills belong next to who posted, above the headline,
+// the way a social card shows the group or page a post came from.
+//
+// Done with `order` rather than by moving the element, because the info line is
+// flarum/tags' territory - it puts its labels in there, and so do best-answer,
+// sticky and any other list decorator. Reordering costs nothing and keeps all
+// of them working. The DOM order stays title-then-meta, which is also the
+// better reading order for a screen reader.
 .DiscussionListItem-main {
-  display: block;
+  display: flex;
+  flex-direction: column;
   padding: 0;
   color: inherit;
+}
+
+.DiscussionListItem-info {
+  order: -1;
+}
+
+// flarum/tags "floats" the tag pills at @tablet-up: it takes .item-tags out of
+// the flow and pins it to `right: 80px; top: 14px` with `max-width: 150px`,
+// `white-space: nowrap` and `overflow: hidden`, revealing the rest on hover via
+// a mask. On a stock list that reads as a neat corner label. On a feed card it
+// is a chip floating over the author line, and - worse - a discussion with
+// three tags silently shows one and a half of them.
+//
+// Cascade puts them back in the meta line, in full. The selector carries an
+// extra class over flarum/tags' own (which is `.IndexPage .DiscussionListItem
+// -info > .item-tags`, three classes) because equal specificity would leave the
+// winner down to extension load order, and Cascade does not require
+// flarum/tags - so it cannot rely on loading after it.
+[data-cascade-preset] .DiscussionList .DiscussionListItem-info > .item-tags {
+  position: static;
+  inset: auto;
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+  margin: 0;
+  -webkit-mask-image: none;
+  mask-image: none;
+
+  .TagsLabel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+// The same rule reserves 155px at the end of every title for the floating
+// pills. Nothing floats there now.
+[data-cascade-preset] .DiscussionList .DiscussionListItem-title {
+  margin-right: 0;
 }
 
 .DiscussionListItem-title {
@@ -171,6 +231,8 @@
     margin: 0;
   }
 
+  margin-bottom: 5px;
+
   // Cascade renders the excerpt itself, as prose under the title. Anything
   // that contributes a second one into core's info line - core's own search
   // excerpt, or another extension's - would print the same post twice, and in
@@ -190,18 +252,29 @@
   font-size: 15px;
   line-height: 1.42;
   color: var(--text-color);
+  white-space: pre-line;
   .cs-clamp(4);
+
+  // "See more" drops the clamp and shows the whole post's text. The element
+  // and everything around it - including the image below - stay exactly as
+  // they were; only the amount of text changes.
+  &--full {
+    display: block;
+    -webkit-line-clamp: none;
+    overflow: visible;
+  }
 }
 
-// "See more" opens the card in place rather than navigating away - the same
-// action the reply count triggers, reached from the other end of the post.
+// "See more" continues the sentence it interrupts, so it sits inline at the
+// end of the text rather than on a row of its own - on its own line it reads
+// as a separate control instead of as the rest of the post.
 .Cascade-seeMore {
-  display: inline-block;
-  margin-top: 4px;
+  display: inline;
+  margin-inline-start: 4px;
   padding: 0;
   border: 0;
   background: none;
-  font-size: 14.5px;
+  font: inherit;
   font-weight: 600;
   color: var(--muted-color);
   cursor: pointer;
@@ -251,62 +324,126 @@
   }
 }
 
-// ── Media ────────────────────────────────────────────────────────────────────
+// ── Media mosaic ─────────────────────────────────────────────────────────────
+//
+// The layout follows the image count, because the shape is what tells you at a
+// glance how many pictures a post has:
+//
+//   1   one image at its own aspect ratio
+//   2   side by side
+//   3   one tall left, two stacked right
+//   4   a 2x2 grid
+//   5+  two on top, three below, the overflow counted on the last tile
+//
+// Every count except one uses square-ish crops: a mosaic of mixed aspect
+// ratios does not tile, which is exactly why a single image is special-cased.
 
 .Cascade-media {
-  display: block;
+  display: grid;
+  gap: 2px;
   margin-top: 11px;
-  overflow: hidden;
   border-radius: var(--cs-media-radius);
-  background: var(--control-bg);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--cs-line);
+  .cs-focus-ring();
+}
+
+.Cascade-media-tile {
   position: relative;
+  overflow: hidden;
+  background: var(--control-bg);
+  min-width: 0;
 
   img {
     display: block;
     width: 100%;
-    // Height follows the image, capped rather than fixed. A fixed height
-    // stretches a 440x60 logo to 268px and crops away everything but two
-    // letters; letting it size naturally keeps wide images wide and short,
-    // while the cap still stops a tall screenshot from filling the screen.
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+// One image: no crop. A 440x60 logo stretched into a square tile loses
+// everything but two letters, and a single image is the case where the post
+// is usually *about* that image.
+.Cascade-media--1 {
+  grid-template-columns: 1fr;
+
+  .Cascade-media-tile img {
     height: auto;
     max-height: var(--cs-media-height);
-    object-fit: cover;
-    object-position: center top;
-    background: var(--control-bg);
+  }
+}
+
+.Cascade-media--2 {
+  grid-template-columns: 1fr 1fr;
+  aspect-ratio: 2 / 1;
+}
+
+// One tall on the left, two stacked on the right.
+.Cascade-media--3 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  aspect-ratio: 3 / 2;
+
+  .Cascade-media-tile:first-child {
+    grid-row-start: 1;
+    grid-row-end: 3;
+  }
+}
+
+.Cascade-media--4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  aspect-ratio: 1 / 1;
+}
+
+// Two on top, three below - the shape Facebook uses once a post has five or
+// more pictures.
+.Cascade-media--5 {
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: 1.2fr 1fr;
+  aspect-ratio: 1 / 1;
+
+  .Cascade-media-tile:nth-child(1),
+  .Cascade-media-tile:nth-child(2) {
+    grid-column-end: span 3;
   }
 
-  &-more {
-    position: absolute;
-    inset-inline-end: 10px;
-    bottom: 10px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, .62);
-    color: #fff;
-    font-size: 12.5px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
+  .Cascade-media-tile:nth-child(3),
+  .Cascade-media-tile:nth-child(4),
+  .Cascade-media-tile:nth-child(5) {
+    grid-column-end: span 2;
   }
+}
+
+// "+3" on the last tile, over a scrim so it reads on any photo.
+.Cascade-media-overflow {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .45);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 // ── Counts ───────────────────────────────────────────────────────────────────
 //
-// Core's stats column is a 40px vertical stack floated beside the excerpt.
-// Here it becomes the counts strip: right-aligned, above the divider, the way
-// "18 comments" sits above the action bar in a social card.
+// Core's stats column is a 40px vertical stack floated beside the excerpt. The
+// reply count it carries now lives on the Reply action in the engagement bar,
+// so this would be the same number printed twice on every card.
+//
+// It is hidden rather than removed because the element is also core's
+// mark-as-read affordance on an unread row - removing the item would take that
+// with it. Unread state still reads from the title weight, and opening the
+// discussion marks it read either way.
 [data-cascade-preset] .DiscussionListItem-stats {
-  position: static;
-  width: auto;
-  flex-direction: row;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 14px;
-  margin-top: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--cs-line);
-  color: var(--muted-color);
-  font-size: 13.5px;
-  font-variant-numeric: tabular-nums;
+  display: none;
 }
 
 // ── Replies ──────────────────────────────────────────────────────────────────

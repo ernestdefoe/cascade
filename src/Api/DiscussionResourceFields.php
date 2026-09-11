@@ -34,6 +34,12 @@ class DiscussionResourceFields
      */
     public const MAX_EXCERPT = 600;
 
+    /**
+     * How many images the card's mosaic can lay out. Beyond this the count
+     * goes on the last tile as "+N".
+     */
+    public const MAX_TILES = 5;
+
     public function __invoke(): array
     {
         // Resolved here rather than injected into the constructor: the
@@ -48,7 +54,7 @@ class DiscussionResourceFields
 
         return [
             Schema\Str::make('cascadeExcerpt')
-                ->visible(fn (Discussion $discussion, Context $context) => $context->listing() && $density !== 'title')
+                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density !== 'title')
                 ->get(function (Discussion $discussion) use ($length): ?string {
                     $xml = $this->firstPostXml($discussion);
 
@@ -69,20 +75,16 @@ class DiscussionResourceFields
                     return $this->truncate($text, $length);
                 }),
 
-            Schema\Str::make('cascadeImage')
-                ->visible(fn (Discussion $discussion, Context $context) => $context->listing() && $density === 'excerpt_media')
-                ->get(function (Discussion $discussion): ?string {
+            // Up to five images, which is what a social mosaic shows before it
+            // collapses the rest into a "+N" on the last tile. Capped here
+            // rather than client-side so the payload never carries URLs nobody
+            // will render.
+            Schema\Arr::make('cascadeImages')
+                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density === 'excerpt_media')
+                ->get(function (Discussion $discussion): array {
                     $xml = $this->firstPostXml($discussion);
 
-                    if ($xml === null) {
-                        return null;
-                    }
-
-                    foreach ($this->imageUrls($xml) as $src) {
-                        return $src;
-                    }
-
-                    return null;
+                    return $xml === null ? [] : array_slice($this->imageUrls($xml), 0, self::MAX_TILES);
                 }),
 
             // The most recent reply, previewed under the row the way a social
@@ -91,7 +93,7 @@ class DiscussionResourceFields
             // on this endpoint - so the only thing missing was the text, and
             // that is what this adds.
             Schema\Str::make('cascadeLastReply')
-                ->visible(fn (Discussion $discussion, Context $context) => $context->listing())
+                ->visible(fn (Discussion $discussion, Context $context) => $context->listing() && $discussion->relationLoaded('lastPost'))
                 ->get(function (Discussion $discussion): ?string {
                     $xml = $this->lastReplyXml($discussion);
 
@@ -109,7 +111,7 @@ class DiscussionResourceFields
                 }),
 
             Schema\Integer::make('cascadeImageCount')
-                ->visible(fn (Discussion $discussion, Context $context) => $context->listing() && $density === 'excerpt_media')
+                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density === 'excerpt_media')
                 ->get(function (Discussion $discussion): int {
                     $xml = $this->firstPostXml($discussion);
 
@@ -120,6 +122,29 @@ class DiscussionResourceFields
                     return count($this->imageUrls($xml));
                 }),
         ];
+    }
+
+    /**
+     * Whether this serialization can actually produce the field's value.
+     *
+     * This is not a micro-optimisation, it is a correctness requirement.
+     * Cascade's eager loads live on the DISCUSSIONS index endpoint. The same
+     * discussion is serialized in other listings too - most importantly as the
+     * `discussion` relationship of every post, which is exactly what the feed
+     * requests when a card opens its modal. There `firstPost` is not loaded, so
+     * the getters would return null and an empty array.
+     *
+     * That payload then reaches a store that already holds the good values, and
+     * `Model.pushData` merges with `Object.assign` - so present-but-empty
+     * attributes OVERWRITE them. The visible symptom is a card whose images and
+     * excerpt vanish a moment after you open its modal.
+     *
+     * Returning false here omits the attributes entirely, and absent keys are
+     * left alone by the merge.
+     */
+    protected function canCompute(Discussion $discussion, Context $context): bool
+    {
+        return $context->listing() && $discussion->relationLoaded('firstPost');
     }
 
     /**
@@ -194,12 +219,39 @@ class DiscussionResourceFields
      */
     protected function imageUrls(string $xml): array
     {
-        $candidates = array_merge(
+        // Attachments first, and if there are any, ONLY attachments.
+        //
+        // An uploaded image is deliberate media - somebody attached a photo or
+        // a screenshot to their post. An inline markdown image very often is
+        // not: a release announcement is typically one cover image followed by
+        // a row of shields.io badges, and a mosaic that tiles four build
+        // badges beside the cover looks broken rather than illustrated.
+        $uploads = $this->collect(array_merge(
             Utils::getAttributeValues($xml, 'UPL-IMAGE-PREVIEW', 'thumbnail_url'),
-            Utils::getAttributeValues($xml, 'UPL-IMAGE-PREVIEW', 'url'),
-            Utils::getAttributeValues($xml, 'IMG', 'src')
-        );
+            Utils::getAttributeValues($xml, 'UPL-IMAGE-PREVIEW', 'url')
+        ));
 
+        if ($uploads !== []) {
+            return $uploads;
+        }
+
+        // No attachments, so fall back to inline images - minus anything that
+        // looks like a badge, which is the one inline-image class that is never
+        // the subject of the post.
+        return array_values(array_filter(
+            $this->collect(Utils::getAttributeValues($xml, 'IMG', 'src')),
+            fn (string $url) => ! $this->isBadge($url)
+        ));
+    }
+
+    /**
+     * Keep the safe, non-empty, unique URLs, in order.
+     *
+     * @param  array<mixed>  $candidates
+     * @return list<string>
+     */
+    protected function collect(array $candidates): array
+    {
         $urls = [];
 
         foreach ($candidates as $url) {
@@ -209,6 +261,28 @@ class DiscussionResourceFields
         }
 
         return $urls;
+    }
+
+    /**
+     * A status badge rather than a picture.
+     *
+     * Matched by host and path rather than by size, because knowing the size
+     * would mean fetching every image on every page of the discussion list.
+     * These are the badge services that actually turn up in forum posts; a
+     * false negative just shows one extra tile, which is recoverable.
+     */
+    protected function isBadge(string $url): bool
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        $path = strtolower((string) parse_url($url, PHP_URL_PATH));
+
+        $badgeHosts = ['img.shields.io', 'shields.io', 'badgen.net', 'badge.fury.io', 'flat.badgen.net'];
+
+        if (in_array($host, $badgeHosts, true)) {
+            return true;
+        }
+
+        return str_contains($path, '/badge/') || str_contains($path, '/badges/');
     }
 
     /**
