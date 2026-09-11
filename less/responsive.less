@@ -13,10 +13,33 @@
   }
 
   .App--index .Page-content {
-    // Give the reclaimed space back to the feed rather than leaving it blank.
     width: auto;
     flex: 1 1 auto;
-    max-width: var(--cs-feed-width);
+
+    /*
+     * 🚨 No max-width here.
+     *
+     * The comment this replaces claimed the reclaimed space went back to the
+     * feed, and `--cs-feed-width` quietly stopped that from happening: with the
+     * rail gone the column still capped itself, leaving 122px of empty ground at
+     * 1100 and 172px at 1199. On the two column presets that band was bounded by
+     * the column's own 1px rule in --cs-line, so what you actually saw was a
+     * light grey line with a strip of dead page between it and the scrollbar.
+     *
+     * The whole point of hiding the rail is to give its width to the feed, so
+     * let the feed take it.
+     */
+    max-width: none;
+  }
+
+  /*
+   * And no side rules in this band either. With no rails the column IS the
+   * page, so a rule down each side is not the edge of a column any more — it is
+   * a stray line a few pixels in from the window edge.
+   */
+  [data-cascade-preset='timeline'] .App--index .Page-content,
+  [data-cascade-preset='stream'] .App--index .Page-content {
+    border-inline: 0;
   }
 }
 
