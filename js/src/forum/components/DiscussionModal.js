@@ -12,6 +12,7 @@ import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 import MediaMosaic from './MediaMosaic';
 import postContent from '../postContent';
 import { replyState, load } from '../repliesState';
+import { acquireTyping, holdForComposer, releaseTyping, typingIndicator } from '../typing';
 
 /**
  * The whole discussion, over the feed, without leaving it.
@@ -34,6 +35,16 @@ export default class DiscussionModal extends Modal {
     this.discussion = this.attrs.discussion;
 
     load(this.discussion).catch(() => {});
+
+    // Null unless flarum/realtime is installed and this viewer is allowed to
+    // see who is typing here.
+    this.typing = acquireTyping(this.discussion);
+  }
+
+  onremove(vnode) {
+    super.onremove(vnode);
+
+    if (this.typing) releaseTyping(this.discussion);
   }
 
   className() {
@@ -62,6 +73,7 @@ export default class DiscussionModal extends Modal {
       <div className="Modal-body Cascade-modal-body">
         {this.openingPost(state)}
         {this.replies(state)}
+        {this.typingView()}
         {this.footer()}
       </div>
     );
@@ -154,6 +166,28 @@ export default class DiscussionModal extends Modal {
     );
   }
 
+  /**
+   * "X is typing", between the last reply and the reply button - where the next
+   * message is about to appear, which is the only place it means anything.
+   *
+   * flarum/realtime's own component does the rendering. Cascade supplies the
+   * state and the socket subscription, because realtime only ever creates those
+   * in PostStream and there is no PostStream on the index.
+   */
+  typingView() {
+    if (!this.typing) return null;
+
+    const TypingIndicator = typingIndicator();
+
+    if (!TypingIndicator) return null;
+
+    return (
+      <div className="Cascade-modal-typing">
+        <TypingIndicator state={this.typing} />
+      </div>
+    );
+  }
+
   footer() {
     return (
       <footer className="Cascade-modal-footer">
@@ -182,6 +216,11 @@ export default class DiscussionModal extends Modal {
    */
   reply() {
     const discussion = this.discussion;
+
+    // Keep the typing subscription alive across the handover: the modal is
+    // about to close, and releasing on close would drop it at the exact moment
+    // the user starts typing. The hold releases itself when the composer does.
+    holdForComposer(discussion);
 
     this.hide();
 

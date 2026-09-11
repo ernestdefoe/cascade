@@ -27,7 +27,7 @@
     "suggest": {
         "flarum/tags": "Tag chips on every feed row, and the tag list in the left rail. Cascade styles them but does not require them.",
         "flarum/subscriptions": "Powers the Following filter in the left rail and the Follow control on the discussion page.",
-        "flarum/realtime": "Replaces core's 'N updates available' banner with the new-discussions pill at the top of the feed.",
+        "flarum/realtime": "Live typing indicators inside the conversation modal, and the new-discussions pill in place of core's 'N updates available' banner. Cascade supplies the state and subscription the modal needs; without this extension neither appears.",
         "ernestdefoe/presence": "Fills the 'Online now' widget in the right rail. The widget hides itself when this is not installed.",
         "ernestdefoe/mobile-tab": "Bottom tab bar on phones. Cascade ships a matching preset instead of implementing a second tab bar.",
         "fof/upload": "Image attachments are what the feed's media grid renders. Without it, only images embedded in post markdown are picked up."

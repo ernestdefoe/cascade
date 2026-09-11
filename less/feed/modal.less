@@ -72,6 +72,41 @@
   text-align: center;
 }
 
+// "X is typing", sitting where the next message will appear. The row holds its
+// height whether or not anybody is typing, so the reply button does not jump
+// down the moment somebody starts.
+.Cascade-modal-typing {
+  min-height: 26px;
+  padding: 6px 0 2px;
+  font-size: 13px;
+  color: var(--muted-color);
+
+  // flarum/realtime styles this for the post stream, where it sits under a
+  // full-width list. In the modal it only needs to be quiet and out of the way.
+  .TypingUsersContainer {
+    margin: 0;
+    padding: 0;
+    // realtime paints its own surface for the post stream, where the indicator
+    // sits against the page. Inside the modal that reads as a stray bar.
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .TypingUsers {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  // With nobody typing, realtime renders a paused icon and "no activity". In a
+  // modal that is noise, so the row stays reserved but blank until it has
+  // something to say.
+  .TypingUsersContainer:not(.TypingUsersContainer-active) {
+    visibility: hidden;
+  }
+}
+
 .Cascade-modal-footer {
   display: flex;
   align-items: center;
