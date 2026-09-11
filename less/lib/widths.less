@@ -1,0 +1,109 @@
+// ============================================================================
+// Widescreen ladder
+//
+// The shell is three fixed columns, so "use more of the screen" is a question
+// of what those columns measure at each band — not of making anything fluid.
+// Left as one fixed set, Cascade filled 1168px of every display from a 1200px
+// laptop to a 2560px monitor: 61% of a 1920 screen, 46% of a 2560 one, the rest
+// dead margin.
+//
+// Three rules shape the numbers below.
+//
+// 1. **The feed takes the growth.** The first attempt spread it across all three
+//    columns and the right rail went to 440px, which made the Trending widget
+//    read as a second content column rather than a sidebar — it looked out of
+//    place because it *was* out of proportion. The rail is a sidebar at every
+//    band: it gains ~24px across the whole ladder, enough to stay balanced
+//    against a wider feed without ever competing with it.
+//
+// 2. **The feed still has a ceiling.** Past roughly 800px a post with a 40px
+//    avatar beside it stops looking generous and starts looking stretched,
+//    which is why neither lineage this theme descends from widens its own
+//    column much. 820/840 is where this stops.
+//
+// 3. **A band's total stays under the viewport that opens it.** The columns are
+//    fixed pixels inside a container core clamps with `min(var(--container-*),
+//    100%)`. If the columns out-measure the clamped container the layout does
+//    not scroll — body hides the overflow and auto margins cannot go negative,
+//    so it silently clips off-centre. Every total here has room to spare, and
+//    `overflows` is asserted false at each band.
+//
+//          band        left   gap   feed   gap  right   total   container
+//   wall   ≥1200 base   252    20    576    20    300    1168    (below)
+//          ≥1400        252    20    690    20    308    1290     1300
+//          ≥1600        264    24    760    24    316    1388     1410
+//          ≥2000        288    24    820    24    324    1480     1500
+//
+//   timeline ≥1200 base 252     0    602     0    348    1202    (below)
+//          ≥1400        252     0    700     0    348    1300     1300
+//          ≥1600        268     0    780     0    356    1404     1410
+//          ≥2000        288     0    840     0    364    1492     1500
+//
+// The base band is deliberately untouched. 1168/1202 is sized to survive a
+// viewport of exactly 1200 once a scrollbar is taken out of it; anything wider
+// there clips rather than scrolls.
+//
+// Imported after presets/ so these win over the preset token blocks, and before
+// responsive.less, which handles everything below 1200 by dropping the right
+// rail entirely.
+// ============================================================================
+
+// ── ≥1400: the common laptop and small desktop ───────────────────────────────
+@media (min-width: 1400px) {
+  [data-cascade-preset='wall'] {
+    --cs-feed-width:  690px;
+    --cs-rail-right:  308px;
+
+    --container-hd:   1300px;
+  }
+
+  [data-cascade-preset='timeline'] {
+    --cs-feed-width:  700px;
+
+    --container-hd:   1300px;
+  }
+}
+
+// ── ≥1600: core's xl band ────────────────────────────────────────────────────
+@media (min-width: 1600px) {
+  [data-cascade-preset='wall'] {
+    --cs-rail-left:    264px;
+    --cs-gap:          24px;
+    --cs-feed-width:   760px;
+    --cs-rail-right:   316px;
+    --cs-media-height: 300px;
+
+    --container-xl:    1410px;
+  }
+
+  [data-cascade-preset='timeline'] {
+    --cs-rail-left:    268px;
+    --cs-feed-width:   780px;
+    --cs-rail-right:   356px;
+    --cs-media-height: 290px;
+
+    --container-xl:    1410px;
+  }
+}
+
+// ── ≥2000: core's xxl band ───────────────────────────────────────────────────
+@media (min-width: 2000px) {
+  [data-cascade-preset='wall'] {
+    --cs-rail-left:    288px;
+    --cs-gap:          24px;
+    --cs-feed-width:   820px;
+    --cs-rail-right:   324px;
+    --cs-media-height: 330px;
+
+    --container-xxl:   1500px;
+  }
+
+  [data-cascade-preset='timeline'] {
+    --cs-rail-left:    288px;
+    --cs-feed-width:   840px;
+    --cs-rail-right:   364px;
+    --cs-media-height: 320px;
+
+    --container-xxl:   1500px;
+  }
+}
