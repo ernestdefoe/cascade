@@ -58,6 +58,9 @@ ernestdefoe-cascade:
       open_full: "Open full page"
 
     rail:
+      # The hashtag cloud. Only rendered when ernestdefoe/hashtags is enabled.
+      hashtags_title: Hashtags
+      hashtags_count: "{count, plural, one {# post} other {# posts}}"
       trending_title: "Trending"
       trending_week: "Trending this week"
       trending_month: "Trending this month"

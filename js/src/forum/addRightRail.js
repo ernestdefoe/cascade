@@ -4,7 +4,8 @@ import ItemList from 'flarum/common/utils/ItemList';
 import IndexPage from 'flarum/forum/components/IndexPage';
 
 import TrendingWidget from './components/TrendingWidget';
-import { setting } from './settings';
+import HashtagCloudWidget from './components/HashtagCloudWidget';
+import { setting, hasExtension } from './settings';
 
 /**
  * fof/forum-widgets-core's side section, as it names its own item.
@@ -67,6 +68,18 @@ export function widgetItems() {
 
   if (setting('widget_trending')) {
     items.add('trending', <TrendingWidget />, 100);
+  }
+
+  /*
+   * Only when ernestdefoe/hashtags is actually enabled. The widget calls
+   * `app.route('hashtag', ...)`, and that route is registered by that
+   * extension — asking for a route nobody registered throws, inside the rail's
+   * render pass, where Flarum's extender try/catch cannot see it and the whole
+   * page goes blank. Cascade never depends on it; it just decorates it if it
+   * is there.
+   */
+  if (setting('widget_hashtags') && hasExtension('ernestdefoe-hashtags')) {
+    items.add('hashtags', <HashtagCloudWidget />, 90);
   }
 
   return items;

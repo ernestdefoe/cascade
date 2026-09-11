@@ -274,3 +274,44 @@
 .Cascade-rail a:focus {
   text-decoration: none;
 }
+
+// ── The hashtag cloud ────────────────────────────────────────────────────────
+//
+// Sized by rank, not by count — see HashtagCloudWidget. Five steps is enough to
+// read as a cloud and few enough that the smallest is still legible; the
+// smallest step is deliberately not below 12px, because a cloud whose tail is
+// unreadable is just decoration.
+.Cascade-hashtagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.Cascade-hashtag {
+  color: var(--muted-color);
+  line-height: 1.3;
+  // Every tag stays clickable at a comfortable size even when its type is
+  // small: the padding, not the glyph, is the target.
+  padding: 2px 0;
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: var(--cs-accent);
+    // The rail carries no underlines anywhere else; this matches it.
+    text-decoration: none;
+  }
+
+  &--w1 { font-size: 12px; }
+  &--w2 { font-size: 13px; }
+  &--w3 { font-size: 15px; font-weight: 500; }
+  &--w4 { font-size: 17px; font-weight: 600; }
+  &--w5 {
+    font-size: 20px;
+    font-weight: 700;
+    // The most-used tag is the one thing in the rail that earns the text
+    // colour rather than the muted one.
+    color: var(--text-color);
+  }
+}

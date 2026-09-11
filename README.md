@@ -35,6 +35,8 @@ you the **post**. That one difference is what Cascade is built around.
   exists (it is the permalink every notification and search result points at)
   and the modal links to it, but you rarely need it.
 - **Live typing indicator** inside that modal, when `flarum/realtime` is on.
+- **Both rails stay put** while the feed scrolls, so navigation and the widgets
+  are always reachable. A rail taller than the window scrolls inside itself.
 - **Three presets** — an admin sets the forum's default, and members can pick
   their own from their settings page:
 
@@ -103,8 +105,16 @@ relaxed `minimum-stability`, because Flarum 2 itself is a release candidate.
 Cascade deliberately adds **no accent-colour setting**. Your forum already has
 one under **Appearance**, and Flarum computes button contrast colours from it at
 compile time — a second accent would recolour half the page and leave the other
-half pointing at the old one. Facebook-style reads best around `#1877F2`, X-style around
-`#1D9BF0`.
+half pointing at the old one.
+
+Everything around that accent is a **neutral graphite ramp**, shared by all
+three presets. They used to carry their lineage's brand palette as well, which
+made the resemblance louder than it needed to be and meant three colour systems
+to keep legible across four theme modes instead of one. The ramp has no hue on
+purpose: a grey with a cast reads as "almost blue" next to your accent and
+fights it, while a true neutral leaves the accent as the only colour on the
+page. Pick whatever accent suits your forum — the presets are told apart by
+their structure, not their colour.
 
 ---
 
@@ -126,7 +136,7 @@ it; with any of them absent, the matching piece of UI is simply not rendered.
 
 ## Settings
 
-Six, in the extension's own admin page:
+Eight, in the extension's own admin page:
 
 - **Preset** — the forum's default: Facebook-, X- or Bluesky-style
 - **Let members choose their own** — adds a *Feed style* picker to each member's
@@ -137,6 +147,12 @@ Six, in the extension's own admin page:
 - **Excerpt length** — 40 to 600 characters
 - **Trending widget** — tags ranked by discussions actually started recently,
   recomputed hourly (never read from `tags.discussion_count`, which drifts)
+- **Hashtag cloud widget** — a weighted cloud of the most-used hashtags, sized
+  by rank rather than raw count so it stays readable however lopsided the
+  numbers are. Appears only when
+  [`ernestdefoe/hashtags`](https://packagist.org/packages/ernestdefoe/hashtags)
+  is enabled; Cascade never depends on it.
+- **Hashtags in the cloud** — 6 to 60
 - **Engagement bar** — auto / always / hidden
 
 ---

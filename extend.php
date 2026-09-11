@@ -153,6 +153,8 @@ return [
         ->serializeToForum('cascade.engagement_bar',  'ernestdefoe-cascade.engagement_bar',  'strval',  'auto')
         ->serializeToForum('cascade.mobile_tabbar',   'ernestdefoe-cascade.mobile_tabbar',   'strval',  'extension')
         ->serializeToForum('cascade.allow_user_preset', 'ernestdefoe-cascade.allow_user_preset', 'boolval', true)
+        ->serializeToForum('cascade.widget_hashtags',  'ernestdefoe-cascade.widget_hashtags',  'boolval', true)
+        ->serializeToForum('cascade.hashtag_count',    'ernestdefoe-cascade.hashtag_count',    'intval',  24)
 
         ->default('ernestdefoe-cascade.preset',          'wall')
         ->default('ernestdefoe-cascade.feed_density',    'excerpt_media')
@@ -163,7 +165,9 @@ return [
         ->default('ernestdefoe-cascade.widget_follow',   '1')
         ->default('ernestdefoe-cascade.engagement_bar',  'auto')
         ->default('ernestdefoe-cascade.mobile_tabbar',   'extension')
-        ->default('ernestdefoe-cascade.allow_user_preset', '1'),
+        ->default('ernestdefoe-cascade.allow_user_preset', '1')
+        ->default('ernestdefoe-cascade.widget_hashtags',  '1')
+        ->default('ernestdefoe-cascade.hashtag_count',    '24'),
 
     // Cascade deliberately adds no accent setting of its own - the forum's
     // primary colour in Appearance is the single source of truth, because core

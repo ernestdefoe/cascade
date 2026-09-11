@@ -35,6 +35,23 @@ export default [
       default: true,
     }))
     .setting(() => ({
+      setting: 'ernestdefoe-cascade.widget_hashtags',
+      label: 'Hashtag cloud widget',
+      help: 'A weighted cloud of the most-used hashtags in the right rail, sized by rank rather than raw count so it stays readable however lopsided the numbers are. Shown only when the Hashtags extension is enabled; the setting does nothing without it.',
+      type: 'boolean',
+      default: true,
+    }))
+    .setting(() => ({
+      setting: 'ernestdefoe-cascade.hashtag_count',
+      label: 'Hashtags in the cloud',
+      help: 'Between 6 and 60. More makes the cloud denser and the smallest entries harder to pick out.',
+      type: 'number',
+      min: 6,
+      max: 60,
+      step: 2,
+      default: 24,
+    }))
+    .setting(() => ({
       setting: 'ernestdefoe-cascade.feed_density',
       label: 'What each row shows',
       help: 'Excerpt and image is what makes the list read as a feed. Title only turns Cascade back into a conventional discussion list and skips the excerpt query entirely.',

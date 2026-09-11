@@ -16,6 +16,8 @@ const DEFAULTS = {
   engagement_bar: 'auto',
   mobile_tabbar: 'extension',
   allow_user_preset: true,
+  widget_hashtags: true,
+  hashtag_count: 24,
 };
 
 /**
