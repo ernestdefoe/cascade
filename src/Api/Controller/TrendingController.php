@@ -112,7 +112,21 @@ class TrendingController implements RequestHandlerInterface
             ->where('discussions.is_private', false)
             ->whereIn('discussion_tag.tag_id', $visibleTagIds)
             ->groupBy('tags.id', 'tags.name', 'tags.slug')
-            ->orderByDesc($this->db->raw('COUNT(discussion_tag.discussion_id)'))
+            /*
+             * 🚨 COUNT(*), not COUNT(discussion_tag.discussion_id).
+             *
+             * Raw SQL is handed to the driver untouched - the query builder
+             * prefixes table names it put there itself, and cannot prefix one
+             * written inside a raw string. On a forum whose tables are
+             * `fg_discussion_tag`, this route 500s with "Unknown column
+             * 'discussion_tag.discussion_id'" while the rest of the joins, which
+             * the builder wrote, are prefixed correctly.
+             *
+             * COUNT(*) names no table, so there is nothing left to get wrong.
+             * It also counts the same rows: the joins are INNER, so every row in
+             * a group already has a non-null discussion_id.
+             */
+            ->orderByRaw('COUNT(*) DESC')
             ->limit(self::LIMIT);
 
         if ($days !== null) {
@@ -123,13 +137,13 @@ class TrendingController implements RequestHandlerInterface
         $rows = $query->get([
                 'tags.name as name',
                 'tags.slug as slug',
-                $this->db->raw('COUNT(discussion_tag.discussion_id) as discussions'),
+                $this->db->raw('COUNT(*) as discussion_count'),
             ]);
 
         return $rows->map(fn ($row) => [
             'name'  => (string) $row->name,
             'slug'  => (string) $row->slug,
-            'count' => (int) $row->discussions,
+            'count' => (int) $row->discussion_count,
             'days'  => $days,
         ])->all();
     }
