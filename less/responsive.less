@@ -54,14 +54,52 @@
     top: var(--header-height-phone);
   }
 
-  // Rows go full-bleed: a card with side margins wastes a third of a phone.
+  /*
+   * Wall stops being cards on a narrow screen.
+   *
+   * A card needs ground around it to read as raised. There is no room for that
+   * here, so the surface ends up covering almost the whole viewport and the
+   * ground survives only as slivers at the edges — which does not read as a
+   * card, it reads as a lighter grey panel that is slightly the wrong size. It
+   * looked worse still because the toolbar and composer sit inside the
+   * container's 15px padding while the rows are deliberately full-bleed, so the
+   * lighter area changed width halfway down the page.
+   *
+   * Everything paints the ground instead and rows are divided by a hairline.
+   * That is what the lineage itself does at this width, and it makes the
+   * inset-vs-full-bleed mismatch invisible rather than merely less obvious:
+   * with no colour change at the edges there is nothing left to misalign.
+   *
+   * Timeline and Stream need none of this — their surface is already the
+   * ground, which is the whole idea of those two.
+   */
   [data-cascade-preset='wall'] {
+    // The gap existed to separate cards. Hairlines do that now, and a gap as
+    // well would leave a band of ground between every pair of rows.
     .DiscussionList-discussions {
-      gap: 10px;
+      gap: 0;
     }
 
-    .DiscussionListItem-content {
+    .DiscussionListItem-content,
+    .Cascade-composer,
+    .IndexPage-toolbar {
+      background: var(--body-bg);
       border-radius: 0;
+      box-shadow: none;
+    }
+
+    /*
+     * 🚨 `li + li`, not `.DiscussionListItem + .DiscussionListItem`. Every row
+     * is a div that is the ONLY child of its own <li>, so no two rows are ever
+     * adjacent siblings and the shorter selector matches nothing at all.
+     */
+    .DiscussionList-discussions > li + li .DiscussionListItem-content {
+      border-top: 1px solid var(--cs-line);
+    }
+
+    .Cascade-composer,
+    .IndexPage-toolbar {
+      border-bottom: 1px solid var(--cs-line);
     }
   }
 
