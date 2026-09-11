@@ -1,144 +1,142 @@
 // ============================================================================
 // Widescreen ladder
 //
-// The shell is three fixed columns, so "use more of the screen" is a question
-// of what those columns measure at each band — not of making anything fluid.
-// Left as one fixed set, Cascade filled 1168px of every display from a 1200px
-// laptop to a 2560px monitor: 61% of a 1920 screen, 46% of a 2560 one, the rest
-// dead margin.
+// The shell is three fixed columns, so "make the middle wider" is a question of
+// what those columns measure at each band - not of making anything fluid.
 //
-// Three rules shape the numbers below.
+// Two earlier passes were both too timid. The first left 1168px on every
+// display from a 1200px laptop to a 2560px monitor. The second grew the total
+// but spread it across all three columns, which mostly pushed the rails around.
+// This one takes the growth almost entirely out of the rails and gives it to
+// the feed: 576 -> 1004px, and 576 -> 690 even at the narrowest desktop band.
 //
-// 1. **The feed takes the growth.** The first attempt spread it across all three
-//    columns and the right rail went to 440px, which made the Trending widget
-//    read as a second content column rather than a sidebar — it looked out of
-//    place because it *was* out of proportion. The rail is a sidebar at every
-//    band: it gains ~24px across the whole ladder, enough to stay balanced
-//    against a wider feed without ever competing with it.
+// Three rules shape the numbers.
 //
-// 2. **The feed still has a ceiling.** Past roughly 800px a post with a 40px
-//    avatar beside it stops looking generous and starts looking stretched,
-//    which is why neither lineage this theme descends from widens its own
-//    column much. 820/840 is where this stops.
+// 1. The feed takes the growth; the right rail does not. It is a sidebar at
+//    every band and stays near its design width - widen a sidebar and it stops
+//    reading as one, which is exactly the complaint the second pass earned. The
+//    left rail gives up a little at the narrow bands so the feed can have it.
 //
-// 3. **A band's total stays under the viewport that opens it.** The columns are
+// 2. A band's total stays under the viewport that opens it. The columns are
 //    fixed pixels inside a container core clamps with `min(var(--container-*),
 //    100%)`. If the columns out-measure the clamped container the layout does
-//    not scroll — body hides the overflow and auto margins cannot go negative,
-//    so it silently clips off-centre. Every total here has room to spare, and
-//    `overflows` is asserted false at each band.
+//    not scroll - body hides the overflow and auto margins cannot go negative,
+//    so it silently clips off-centre. `overflows` is asserted false at every
+//    band in both preset families.
+//
+// 3. All three presets land on the same totals. Wall carries gaps between its
+//    cards; Timeline and Stream are gapless and put that space into the column
+//    instead. Same outer shape, different interior.
 //
 //          band        left   gap   feed   gap  right   total   container
-//   wall   ≥1200 base   252    20    576    20    300    1168    (below)
-//          ≥1400        252    20    690    20    308    1290     1300
-//          ≥1600        264    24    760    24    316    1388     1410
-//          ≥2000        288    24    820    24    324    1480     1500
+//   wall   >=1200 base  228    14    690    14    234    1180     1180
+//          >=1400       236    16    832    16    252    1352     1360
+//          >=1600       244    18    904    18    264    1448     1456
+//          >=2000       252    20   1004    20    280    1576     1584
 //
-//   timeline ≥1200 base 252     0    602     0    348    1202    (below)
-//          ≥1400        252     0    700     0    348    1300     1300
-//          ≥1600        268     0    780     0    356    1404     1410
-//          ≥2000        288     0    840     0    364    1492     1500
+//   timeline / stream, gapless - the feed absorbs the gaps:
+//          >=1200 base  228     0    718     0    234    1180     1180
+//          >=1400       236     0    864     0    252    1352     1360
+//          >=1600       244     0    940     0    264    1448     1456
+//          >=2000       252     0   1044     0    280    1576     1584
 //
-//   stream ≥1200 base   252     0    604     0    324    1180    (below)
-//          ≥1400        252     0    704     0    340    1296     1300
-//          ≥1600        268     0    780     0    356    1404     1410
-//          ≥2000        288     0    836     0    372    1496     1500
-//
-// The base band is deliberately untouched. 1168/1202 is sized to survive a
-// viewport of exactly 1200 once a scrollbar is taken out of it; anything wider
-// there clips rather than scrolls.
+// The base band is sized to survive a viewport of exactly 1200 once a scrollbar
+// is taken out of it - 1180 is the ceiling there, and the rails give ground so
+// the feed can still be 690 rather than 576.
 //
 // Imported after presets/ so these win over the preset token blocks, and before
 // responsive.less, which handles everything below 1200 by dropping the right
 // rail entirely.
 // ============================================================================
 
-// ── ≥1400: the common laptop and small desktop ───────────────────────────────
+// -- The base band, >=1200 - the tightest desktop layout -----------------------
+@media (min-width: 1200px) {
+  [data-cascade-preset='wall'] {
+    --cs-rail-left:    228px;
+    --cs-gap:          14px;
+    --cs-feed-width:   690px;
+    --cs-rail-right:   234px;
+
+    --container-hd:    1180px;
+  }
+
+  [data-cascade-preset='timeline'],
+  [data-cascade-preset='stream'] {
+    --cs-rail-left:    228px;
+    --cs-feed-width:   718px;
+    --cs-rail-right:   234px;
+
+    --container-hd:    1180px;
+  }
+}
+
+
+// -- >=1400: the common laptop and small desktop -------------------------------
 @media (min-width: 1400px) {
   [data-cascade-preset='wall'] {
-    --cs-feed-width:  690px;
-    --cs-rail-right:  308px;
+    --cs-rail-left:    236px;
+    --cs-gap:          16px;
+    --cs-feed-width:   832px;
+    --cs-rail-right:   252px;
 
-    --container-hd:   1300px;
+    --container-hd:    1360px;
   }
 
-  [data-cascade-preset='timeline'] {
-    --cs-feed-width:  700px;
-
-    --container-hd:   1300px;
-  }
-
+  [data-cascade-preset='timeline'],
   [data-cascade-preset='stream'] {
-    --cs-feed-width:  704px;
-    --cs-rail-right:  340px;
+    --cs-rail-left:    236px;
+    --cs-feed-width:   864px;
+    --cs-rail-right:   252px;
 
-    --container-hd:   1300px;
+    --container-hd:    1360px;
   }
 }
 
-// ── ≥1600: core's xl band ────────────────────────────────────────────────────
+
+// -- >=1600: core's xl band ----------------------------------------------------
 @media (min-width: 1600px) {
   [data-cascade-preset='wall'] {
-    --cs-rail-left:    264px;
-    --cs-gap:          24px;
-    --cs-feed-width:   760px;
-    --cs-rail-right:   316px;
-    --cs-media-height: 300px;
+    --cs-rail-left:    244px;
+    --cs-gap:          18px;
+    --cs-feed-width:   904px;
+    --cs-rail-right:   264px;
+    --cs-media-height: 360px;
 
-    --container-xl:    1410px;
+    --container-xl:    1456px;
   }
 
-  [data-cascade-preset='timeline'] {
-    --cs-rail-left:    268px;
-    --cs-feed-width:   780px;
-    --cs-rail-right:   356px;
-    --cs-media-height: 290px;
-
-    --container-xl:    1410px;
-  }
-
-  // Same numbers as Timeline at this band, deliberately: both are gapless
-  // single-column lineages and the column that reads well for one reads well
-  // for the other. They diverge again at ≥2000, where Stream's larger avatar
-  // wants a little more room beside it.
+  [data-cascade-preset='timeline'],
   [data-cascade-preset='stream'] {
-    --cs-rail-left:    268px;
-    --cs-feed-width:   780px;
-    --cs-rail-right:   356px;
-    --cs-media-height: 296px;
+    --cs-rail-left:    244px;
+    --cs-feed-width:   940px;
+    --cs-rail-right:   264px;
+    --cs-media-height: 350px;
 
-    --container-xl:    1410px;
+    --container-xl:    1456px;
   }
 }
 
-// ── ≥2000: core's xxl band ───────────────────────────────────────────────────
+
+// -- >=2000: core's xxl band ---------------------------------------------------
 @media (min-width: 2000px) {
   [data-cascade-preset='wall'] {
-    --cs-rail-left:    288px;
-    --cs-gap:          24px;
-    --cs-feed-width:   820px;
-    --cs-rail-right:   324px;
-    --cs-media-height: 330px;
+    --cs-rail-left:    252px;
+    --cs-gap:          20px;
+    --cs-feed-width:   1004px;
+    --cs-rail-right:   280px;
+    --cs-media-height: 410px;
 
-    --container-xxl:   1500px;
+    --container-xxl:    1584px;
   }
 
-  [data-cascade-preset='timeline'] {
-    --cs-rail-left:    288px;
-    --cs-feed-width:   840px;
-    --cs-rail-right:   364px;
-    --cs-media-height: 320px;
-
-    --container-xxl:   1500px;
-  }
-
+  [data-cascade-preset='timeline'],
   [data-cascade-preset='stream'] {
-    --cs-rail-left:    288px;
-    --cs-feed-width:   836px;
-    --cs-rail-right:   372px;
+    --cs-rail-left:    252px;
+    --cs-feed-width:   1044px;
+    --cs-rail-right:   280px;
     --cs-avatar:       46px;
-    --cs-media-height: 326px;
+    --cs-media-height: 400px;
 
-    --container-xxl:   1500px;
+    --container-xxl:    1584px;
   }
 }
