@@ -190,6 +190,7 @@
   --header-bg:      @g-white;
   --header-color:   @g-ink;
   --cs-shadow:      0 1px 2px rgba(0, 0, 0, .18);
+  --cs-scrollbar:   @g-300;
 }
 
 [data-cascade-preset='wall'][data-theme^='dark'] {
@@ -207,6 +208,7 @@
   --header-color:   @g-ink-d;
   // A darker ground needs a deeper shadow to register at all.
   --cs-shadow:      0 1px 2px rgba(0, 0, 0, .6);
+  --cs-scrollbar:   #3A3E42;
 }
 
 // ── Timeline and Stream: no cards, so ground and surface are the same ────────
@@ -226,6 +228,7 @@
   --header-bg:      @g-white;
   --header-color:   @g-ink;
   --cs-shadow:      none;
+  --cs-scrollbar:   @g-300;
 }
 
 [data-cascade-preset='timeline'][data-theme^='dark'],
@@ -242,6 +245,7 @@
   --header-bg:      @g-900;
   --header-color:   @g-ink-d;
   --cs-shadow:      none;
+  --cs-scrollbar:   #3A3E42;
 }
 
 // ── High contrast ────────────────────────────────────────────────────────────
@@ -274,4 +278,24 @@
 [data-cascade-preset='stream'][data-theme='light-hc'] {
   --cs-line:        #B9BEC3;
   --muted-color:    #3A3F44;
+}
+
+// ── The scrollbar ────────────────────────────────────────────────────────────
+//
+// 🚨 This is a real, visible part of the page that no amount of styling
+// ELEMENTS can reach, and it is invisible to automated checking: headless
+// Chrome and the in-app browser both use overlay scrollbars, so the strip
+// simply is not in any screenshot they produce. It took a photo of a real
+// window to find.
+//
+// `color-scheme: dark` gets Chrome to paint a DARK scrollbar rather than a
+// light one, which core already sets — but "dark" means #2B2B2B, and against
+// this ground that is a grey strip running the full height of the window,
+// immediately left of the thumb.
+//
+// `scrollbar-color` takes `<thumb> <track>`. Painting the track with the page's
+// own ground makes the strip disappear; the thumb stays visible because it is
+// the only part that is meant to be.
+[data-cascade-preset] {
+  scrollbar-color: var(--cs-scrollbar) var(--body-bg);
 }
