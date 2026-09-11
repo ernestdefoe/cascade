@@ -107,6 +107,52 @@
     border-radius: 0;
   }
 
+  /*
+   * Reclaim the left gutter.
+   *
+   * At 420px the row's padding plus the avatar column pushed the text 69px in
+   * from the left while everything ended 17px from the right — so the reaction
+   * rail and the reply bubble looked jammed against the right edge, because
+   * next to a 69px indent 17px reads as nothing. These are the same tokens the
+   * width ladder tunes upward on a big screen, turned down here.
+   */
+  [data-cascade-preset='wall'],
+  [data-cascade-preset='timeline'],
+  [data-cascade-preset='stream'] {
+    --cs-avatar:     36px;
+    --cs-avatar-sm:  28px;
+    --cs-row-pad-x:  14px;
+  }
+
+  /*
+   * A reply names its author inside the bubble, so the avatar beside it is a
+   * second 40px indent buying nothing. Dropping it on a narrow screen is what
+   * stops the bubble — the one element down there with a lighter background —
+   * from being a pale slab pinned to the right edge. It gets ~50px back.
+   */
+  .Cascade-reply {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .Cascade-reply-avatar {
+    display: none;
+  }
+
+  /*
+   * A little more air on the right than on the left.
+   *
+   * Nothing here overflows — the reaction pips and the reply bubble both end
+   * exactly where the rest of the column does. But the avatar gutter means the
+   * text starts ~61px in while it ends ~15px from the other edge, and against
+   * that much left indent 15px reads as nothing. Widening only the trailing
+   * side costs four pixels of measure and buys back the margin the eye is
+   * looking for.
+   */
+  .DiscussionListItem-content {
+    padding-inline-end: 20px;
+  }
+
   .Cascade-media {
     --cs-media-height: 200px;
   }
