@@ -65,3 +65,20 @@
   width: 38px;
   height: 38px;
 }
+
+/*
+ * The welcome hero, in the two flat presets.
+ *
+ * Core paints it with the control colour, which on a preset whose surface IS
+ * the ground leaves a full-width lighter band under the header — the last
+ * lighter-grey rectangle on the page once the feed itself went flat. Wall keeps
+ * the filled version: on a preset built from cards, a card-coloured hero is the
+ * consistent answer.
+ */
+[data-cascade-preset='timeline'],
+[data-cascade-preset='stream'] {
+  .Hero.WelcomeHero {
+    background: var(--cs-surface);
+    border-bottom: 1px solid var(--cs-line);
+  }
+}

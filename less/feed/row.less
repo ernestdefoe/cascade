@@ -345,14 +345,30 @@
   border-radius: var(--cs-media-radius);
   overflow: hidden;
   cursor: pointer;
-  background: var(--cs-line);
+  /*
+   * 🚨 The surface, NOT --cs-line.
+   *
+   * This background is the mortar showing through the 2px gaps, and as a 2px
+   * line the line colour was right. But it is also what shows behind a tile
+   * that has not loaded, failed, or does not fill — and at that size it is a
+   * 338x338 block of grey noticeably lighter than the page, which is exactly
+   * what gets reported as "that light grey". A mosaic that has not loaded
+   * should look like empty page, not like a panel.
+   *
+   * The surface tracks whatever the tiles sit on in every preset: the card in
+   * Wall, the ground in Timeline and Stream. The seams stay visible because
+   * the images either side of them are not the surface colour.
+   */
+  background: var(--cs-surface);
   .cs-focus-ring();
 }
 
 .Cascade-media-tile {
   position: relative;
   overflow: hidden;
-  background: var(--control-bg);
+  // Same reasoning as the container: a tile waiting on its image should read
+  // as empty page, not as a lighter placeholder panel.
+  background: var(--cs-surface);
   min-width: 0;
 
   img {

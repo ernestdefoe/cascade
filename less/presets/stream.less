@@ -173,11 +173,20 @@
   .Cascade-engagement-action[data-cs-action='reply']:hover  { color: #0085FF; }
   .Cascade-engagement-action[data-cs-action='share']:hover  { color: #1D9A5A; }
 
-  // A reply preview keeps a soft card here rather than Timeline's quoted rule —
-  // it is the one place this lineage is the rounder of the two.
+  /*
+   * A reply preview is a quoted passage, not a panel.
+   *
+   * This started as a soft filled card — the one place this lineage was going
+   * to be the rounder of the two. On a narrow screen that made it the largest
+   * lighter-grey rectangle on the page, and on a ground this flat any filled
+   * block reads as a panel that wandered in from another preset. A leading rule
+   * says "quoted" with no fill at all, which is what the rest of the preset is
+   * built on.
+   */
   .Cascade-reply-bubble {
-    background: var(--cs-hover);
-    border-radius: var(--cs-radius);
-    padding: 8px 12px;
+    background: transparent;
+    border-inline-start: 2px solid var(--cs-line);
+    border-radius: 0;
+    padding: 2px 0 2px 12px;
   }
 }

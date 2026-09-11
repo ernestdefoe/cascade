@@ -46,7 +46,18 @@
     }
   }
 
-  [data-cascade-preset='timeline'] .App--index .Page-content {
+  /*
+   * Both column presets lose their side rules here. The column IS the viewport
+   * at this width, so the borders sit hard against the screen edge with the
+   * avatar 1px inside them — the rule reads as a frame the content is jammed
+   * into rather than as the edge of a column.
+   *
+   * 🚨 Stream was missing from this list. It inherits the border from its own
+   * preset file, not from Timeline's, so adding a preset means adding it here
+   * too — the symptom is subtle enough to survive a review.
+   */
+  [data-cascade-preset='timeline'] .App--index .Page-content,
+  [data-cascade-preset='stream'] .App--index .Page-content {
     border-inline: 0;
   }
 
