@@ -28,6 +28,38 @@
   padding-inline-start: 0;
 }
 
+// 🚨 Reclaiming the gutter is only half the job, and the missing half showed as
+// the avatar sitting on top of the author name and the first two lines of every
+// post.
+//
+// `--avatar-column-width: 0px` (lib/tokens.less) collapses core's avatar column
+// to nothing. On the FEED that is correct, because the markup there is
+// Cascade's own. On the discussion page the markup is CORE's: `.Post-container`
+// is a grid, and core still renders `.Post-side` into that first column. A 64px
+// avatar in a 0px column does not disappear — it overflows, 27px of it landing
+// over `.Post-body`, which starts at the same x.
+//
+// So finish what the variable starts: take core's side avatar out of the
+// layout, and show the inline one core hides at this breakpoint — the one this
+// theme says it uses.
+// 🚨 NOT `display: none`. These are auto-placed grid items: removing the side
+// column moves the header into the zero-width first column, which stacks the
+// author line vertically and drops the body out of view entirely. The column
+// has to keep its place in the grid and simply not paint — which, at 0px wide,
+// is what clipping its overflow does.
+.DiscussionPage .Post-side {
+  overflow: hidden;
+}
+
+.DiscussionPage .PostUser-name > a > .Avatar {
+  display: inline-flex;
+  width: var(--cs-avatar-sm);
+  height: var(--cs-avatar-sm);
+  margin-inline-end: 8px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
 .DiscussionPage .Post-body {
   font-size: var(--post-font-size);
 }
