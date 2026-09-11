@@ -35,12 +35,17 @@ you the **post**. That one difference is what Cascade is built around.
   exists (it is the permalink every notification and search result points at)
   and the modal links to it, but you rarely need it.
 - **Live typing indicator** inside that modal, when `flarum/realtime` is on.
-- **Two presets** — pick one in the admin:
+- **Three presets** — an admin sets the forum's default, and members can pick
+  their own from their settings page:
 
 | | |
 |---|---|
-| **Wall** | Cards on a grey ground, dense chrome, a wide labelled action bar. For forums whose visitors mostly lurk and need the affordance spelled out. |
-| **Timeline** | No cards. One 600 px column between hairlines, a sticky tab strip, a quiet action bar. For busy forums where row count matters more. |
+| **Facebook-style** (`wall`) | Cards on a grey ground, dense chrome, a wide labelled action bar. For forums whose visitors mostly lurk and need the affordance spelled out. |
+| **X-style** (`timeline`) | No cards. One column between hairlines, a sticky tab strip, a quiet action bar. For busy forums where row count matters more. |
+| **Bluesky-style** (`stream`) | One column again, but the row separators are inset to the text, the spacing is looser and the actions get pill hovers. Slate ground rather than navy. |
+
+The names in brackets are the stored values and never change; the labels are
+translatable strings.
 
 ---
 
@@ -58,9 +63,13 @@ you the **post**. That one difference is what Cascade is built around.
 
 ![Conversation modal](docs/screenshots/modal.png)
 
-### The Timeline preset
+### The X-style preset
 
-![Timeline preset](docs/screenshots/preset-timeline.png)
+![X-style preset](docs/screenshots/preset-timeline.png)
+
+### The Bluesky-style preset
+
+![Bluesky-style preset](docs/screenshots/preset-stream.png)
 
 ### On a phone
 
@@ -94,7 +103,7 @@ relaxed `minimum-stability`, because Flarum 2 itself is a release candidate.
 Cascade deliberately adds **no accent-colour setting**. Your forum already has
 one under **Appearance**, and Flarum computes button contrast colours from it at
 compile time — a second accent would recolour half the page and leave the other
-half pointing at the old one. Wall reads best around `#1877F2`, Timeline around
+half pointing at the old one. Facebook-style reads best around `#1877F2`, X-style around
 `#1D9BF0`.
 
 ---
@@ -117,9 +126,13 @@ it; with any of them absent, the matching piece of UI is simply not rendered.
 
 ## Settings
 
-Five, in the extension's own admin page:
+Six, in the extension's own admin page:
 
-- **Preset** — Wall or Timeline
+- **Preset** — the forum's default: Facebook-, X- or Bluesky-style
+- **Let members choose their own** — adds a *Feed style* picker to each member's
+  settings page. Their choice applies to them alone; anyone who leaves it on
+  *Use the forum's default* follows the setting above. Turn it off to hold the
+  whole forum to one look.
 - **What each row shows** — excerpt and image / excerpt only / title only
 - **Excerpt length** — 40 to 600 characters
 - **Trending widget** — tags ranked by discussions actually started recently,
@@ -155,7 +168,8 @@ Being honest about what is not done yet:
 - **Mobile** works but has had less attention than desktop.
 - The modal's reply button opens Flarum's real composer rather than an inline
   comment box.
-- The **Timeline** preset has had less testing than Wall.
+- The **X-style** and **Bluesky-style** presets have had less testing than
+  Facebook-style.
 - Only English ships, though every string is translatable — no hardcoded text.
 
 ---

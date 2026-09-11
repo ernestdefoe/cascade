@@ -1,0 +1,183 @@
+// ============================================================================
+// Stream — the Bluesky lineage
+//
+// The hardest of the three to make distinct, because it shares Timeline's
+// starting point: one column, no cards, rows divided by a line. Everything here
+// is chosen for what actually separates the two in use.
+//
+//   · The row separator is INSET to the content column, not run edge to edge.
+//     A full-width rule cuts the row into a slab; an inset one reads as a break
+//     between two things that belong to the same list. It is the single most
+//     recognisable thing about this lineage's feed.
+//   · The rhythm is looser — more air above and below the body text.
+//   · Engagement actions get a pill hover with the count beside the icon,
+//     rather than Timeline's spread bar of quiet glyphs.
+//   · Media is rounded harder and keeps a visible border at every size.
+//
+// Shares Timeline's structural grid (avatar spanning the row, content beside
+// it). That part of the shape is common to both and not worth diverging on.
+// ============================================================================
+
+[data-cascade-preset='stream'] {
+
+  .App--index .Page-content {
+    border-inline: 1px solid var(--cs-line);
+  }
+
+  .DiscussionList-discussions {
+    display: block;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .DiscussionListItem {
+    border-radius: 0;
+    // No border here. The separator below is drawn inset instead, and a row
+    // carrying both would show a stray 16px stub at each end.
+    border-bottom: 0;
+    position: relative;
+  }
+
+  /*
+   * The inset separator.
+   *
+   * Drawn as a pseudo-element rather than a border so it can start where the
+   * content column starts. `--cs-row-pad-x` is the row's own inline padding and
+   * `--cs-avatar` the gutter, so this stays aligned if either is retuned — and
+   * the width ladder does retune the avatar at the top band.
+   *
+   * 🚨 The exemption for the final row is applied to the <li>, NOT to
+   * .DiscussionListItem. Each row is a div that is the ONLY child of its own
+   * <li>, so every row satisfies :last-child and `.DiscussionListItem:not(
+   * :last-child)` matches nothing at all — the rule compiles, ships, and draws
+   * on no row on any forum. Caught only by asking the browser for the computed
+   * ::after, which came back `content: none`.
+   *
+   * Drawn on every row and removed from the last one, rather than drawn
+   * conditionally: if this markup ever changes again the worst case is one
+   * stray rule at the bottom of the list, not a preset whose defining feature
+   * silently vanishes.
+   */
+  .DiscussionListItem::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(var(--cs-row-pad-x) + var(--cs-avatar) + 12px);
+    inset-inline-end: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--cs-line);
+  }
+
+  // The column's own bottom edge closes the list; a rule under the final row
+  // reads as a missing item below it.
+  .DiscussionList-discussions > li:last-child .DiscussionListItem::after {
+    display: none;
+  }
+
+  .DiscussionListItem:hover .DiscussionListItem-content {
+    background: var(--cs-hover);
+  }
+
+  // Same grid shape as Timeline: avatar spans the row, everything else beside
+  // it. Set on every child rather than a named list so an element contributed
+  // by another extension still lands in the content column.
+  .DiscussionListItem-content > * {
+    grid-column-start: 2;
+    grid-column-end: -1;
+  }
+
+  .Cascade-avatar {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 1;
+    grid-row-end: -1;
+  }
+
+  .Cascade-avatar img,
+  .Cascade-avatar .Avatar {
+    border-radius: 50%;
+  }
+
+  .DiscussionListItem-title {
+    font-size: 16px;
+    margin-top: 3px;
+  }
+
+  // The looser rhythm. Body text gets room on both sides rather than sitting
+  // tight under the title the way a denser lineage would have it.
+  .DiscussionListItem-excerpt,
+  .Cascade-postContent {
+    line-height: 1.5;
+    margin-top: 6px;
+  }
+
+  .App--index .IndexPage-toolbar {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 2;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--cs-line);
+    background: var(--cs-surface);
+  }
+
+  .Cascade-composer {
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--cs-line);
+    margin-bottom: 0;
+  }
+
+  .Cascade-media {
+    border: 1px solid var(--cs-line);
+    border-radius: var(--cs-media-radius);
+    overflow: hidden;
+  }
+
+  // Counts sit in the action row, so the separate stats line is redundant.
+  .DiscussionListItem-stats {
+    display: none;
+  }
+
+  .Cascade-engagement {
+    max-width: 420px;
+    margin-top: 10px;
+    padding-top: 0;
+
+    &-action {
+      flex: 0 0 auto;
+      justify-content: flex-start;
+      gap: 6px;
+      padding: 5px 10px;
+      font-size: 13px;
+      font-weight: 400;
+      border-radius: 999px;
+
+      // The pill. Timeline tints the glyph and leaves the background alone;
+      // here the whole control lights up, which is what makes the row read as
+      // a set of buttons rather than a line of icons.
+      &:hover {
+        background: var(--cs-hover);
+      }
+
+      &:first-child {
+        margin-inline-start: -10px;
+      }
+    }
+  }
+
+  // This lineage's own semantics, and — as in Timeline — the one place in the
+  // theme where a colour is not the forum's accent.
+  .Cascade-engagement-action[data-cs-action='reply']:hover  { color: #0085FF; }
+  .Cascade-engagement-action[data-cs-action='share']:hover  { color: #1D9A5A; }
+
+  // A reply preview keeps a soft card here rather than Timeline's quoted rule —
+  // it is the one place this lineage is the rounder of the two.
+  .Cascade-reply-bubble {
+    background: var(--cs-hover);
+    border-radius: var(--cs-radius);
+    padding: 8px 12px;
+  }
+}

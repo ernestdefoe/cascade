@@ -39,6 +39,11 @@
 //          ≥1600        268     0    780     0    356    1404     1410
 //          ≥2000        288     0    840     0    364    1492     1500
 //
+//   stream ≥1200 base   252     0    604     0    324    1180    (below)
+//          ≥1400        252     0    704     0    340    1296     1300
+//          ≥1600        268     0    780     0    356    1404     1410
+//          ≥2000        288     0    836     0    372    1496     1500
+//
 // The base band is deliberately untouched. 1168/1202 is sized to survive a
 // viewport of exactly 1200 once a scrollbar is taken out of it; anything wider
 // there clips rather than scrolls.
@@ -59,6 +64,13 @@
 
   [data-cascade-preset='timeline'] {
     --cs-feed-width:  700px;
+
+    --container-hd:   1300px;
+  }
+
+  [data-cascade-preset='stream'] {
+    --cs-feed-width:  704px;
+    --cs-rail-right:  340px;
 
     --container-hd:   1300px;
   }
@@ -84,6 +96,19 @@
 
     --container-xl:    1410px;
   }
+
+  // Same numbers as Timeline at this band, deliberately: both are gapless
+  // single-column lineages and the column that reads well for one reads well
+  // for the other. They diverge again at ≥2000, where Stream's larger avatar
+  // wants a little more room beside it.
+  [data-cascade-preset='stream'] {
+    --cs-rail-left:    268px;
+    --cs-feed-width:   780px;
+    --cs-rail-right:   356px;
+    --cs-media-height: 296px;
+
+    --container-xl:    1410px;
+  }
 }
 
 // ── ≥2000: core's xxl band ───────────────────────────────────────────────────
@@ -103,6 +128,16 @@
     --cs-feed-width:   840px;
     --cs-rail-right:   364px;
     --cs-media-height: 320px;
+
+    --container-xxl:   1500px;
+  }
+
+  [data-cascade-preset='stream'] {
+    --cs-rail-left:    288px;
+    --cs-feed-width:   836px;
+    --cs-rail-right:   372px;
+    --cs-avatar:       46px;
+    --cs-media-height: 326px;
 
     --container-xxl:   1500px;
   }

@@ -15,6 +15,7 @@ const DEFAULTS = {
   widget_follow: true,
   engagement_bar: 'auto',
   mobile_tabbar: 'extension',
+  allow_user_preset: true,
 };
 
 /**

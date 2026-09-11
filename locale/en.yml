@@ -7,6 +7,21 @@ ernestdefoe-cascade:
 
   forum:
 
+    # The member's own preset picker. Shown on their settings page only when an
+    # admin has left "Let members choose their own" on.
+    #
+    # The platform names are deliberate: "Wall" and "Timeline" told nobody what
+    # they were choosing. The values BEHIND these labels are still wall /
+    # timeline / stream and must not be translated - see src/Presets.php.
+    preset:
+      heading: Feed style
+      help: How discussions are laid out for you. This changes nothing for anyone else.
+      follow_forum: Use the forum's default
+      wall: Facebook-style — cards
+      timeline: X-style — rows
+      stream: Bluesky-style — inset rows
+      save_failed: Your feed style could not be saved. Please try again.
+
     # Labels for fof/reactions' default set. A reaction an admin adds
     # later falls back to its own shortname, so nothing here is required.
     reactions:

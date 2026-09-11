@@ -10,13 +10,29 @@ import Admin from 'flarum/common/extenders/Admin';
  */
 export default [
   new Admin()
+    /*
+     * The stored values stay 'wall' / 'timeline' / 'stream'. Only the labels
+     * name the platforms, because a stored key is a migration and a label is a
+     * string — see src/Presets.php.
+     */
     .setting(() => ({
       setting: 'ernestdefoe-cascade.preset',
       label: 'Preset',
-      help: 'Wall puts each discussion on its own card over a grey ground, with a wide labelled engagement bar. Timeline runs them as hairline-separated rows in a single 600px column. Both share the same layout and settings; switching takes effect on the next page load.',
+      help: 'The look every member gets unless they pick their own below. Facebook-style puts each discussion on its own card over a grey ground with a wide labelled engagement bar. X-style runs them as hairline-separated rows in a single column. Bluesky-style keeps the single column but insets the separators to the text, loosens the spacing and gives the actions pill hovers. All three share the same layout and settings; switching takes effect on the next page load.',
       type: 'select',
-      options: { wall: 'Wall — cards', timeline: 'Timeline — rows' },
+      options: {
+        wall: 'Facebook-style — cards',
+        timeline: 'X-style — rows',
+        stream: 'Bluesky-style — inset rows',
+      },
       default: 'wall',
+    }))
+    .setting(() => ({
+      setting: 'ernestdefoe-cascade.allow_user_preset',
+      label: 'Let members choose their own',
+      help: 'Adds a preset picker to each member\u2019s own settings page. Their choice applies only to them, and anyone who does not pick one keeps the forum default above. Turn this off to hold the whole forum to a single look.',
+      type: 'boolean',
+      default: true,
     }))
     .setting(() => ({
       setting: 'ernestdefoe-cascade.feed_density',

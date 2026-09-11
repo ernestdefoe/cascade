@@ -5,6 +5,7 @@ import Discussion from 'flarum/common/models/Discussion';
 import decorateRow from './decorateRow';
 import addComposerTrigger from './addComposerTrigger';
 import addRightRail from './addRightRail';
+import addPresetPicker from './addPresetPicker';
 
 // NOTE: the Admin extender is exported from js/src/admin/index.js and NOWHERE
 // else. It calls app.extensionData, which exists only on the admin frontend —
@@ -40,4 +41,5 @@ app.initializers.add('ernestdefoe-cascade', () => {
   decorateRow();
   addComposerTrigger();
   addRightRail();
+  addPresetPicker();
 }, -100);

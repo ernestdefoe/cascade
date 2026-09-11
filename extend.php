@@ -9,11 +9,14 @@
 use ErnestDefoe\Cascade\Api\Controller\TrendingController;
 use ErnestDefoe\Cascade\Api\DiscussionResourceFields;
 use ErnestDefoe\Cascade\Api\ReactionFields;
+use ErnestDefoe\Cascade\Presets;
 use Flarum\Api\Endpoint;
 use Flarum\Api\Resource\DiscussionResource;
 use Flarum\Extend;
 use Flarum\Frontend\Document;
+use Flarum\Http\RequestUtil;
 use Flarum\Settings\SettingsRepositoryInterface;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
 return [
     // -- Frontend ------------------------------------------------------------
@@ -33,12 +36,32 @@ return [
         // Application::boot() runs every initializer BEFORE it assigns
         // `app.forum` - so `app.forum.attribute()` at that point is a
         // TypeError that takes the whole forum down.
-        ->content(function (Document $document) {
-            $preset = resolve(SettingsRepositoryInterface::class)
-                ->get('ernestdefoe-cascade.preset', 'wall');
+        //
+        // Core calls content callbacks as `$callback($document, $request)`, so
+        // the actor is reachable here and the stamp can be the READER'S choice
+        // rather than one value for the whole forum - still server-side, still
+        // in the first byte, still no flash.
+        ->content(function (Document $document, Request $request) {
+            $settings = resolve(SettingsRepositoryInterface::class);
 
-            $document->extraAttributes['data-cascade-preset'] =
-                in_array($preset, ['wall', 'timeline'], true) ? $preset : 'wall';
+            $preset = $settings->get('ernestdefoe-cascade.preset', 'wall');
+
+            if ($settings->get('ernestdefoe-cascade.allow_user_preset', true)) {
+                $actor = RequestUtil::getActor($request);
+
+                // Guests have no preferences to read; they get the forum's.
+                if ($actor->exists) {
+                    $chosen = $actor->getPreference('cascadePreset');
+
+                    // An empty preference means "follow the forum", which is
+                    // the picker's first option - not a value to fall back from.
+                    if (is_string($chosen) && $chosen !== '') {
+                        $preset = $chosen;
+                    }
+                }
+            }
+
+            $document->extraAttributes['data-cascade-preset'] = Presets::valid($preset);
         }),
 
     (new Extend\Frontend('admin'))
@@ -95,6 +118,26 @@ return [
     (new Extend\Routes('api'))
         ->get('/cascade/trending', 'cascade.trending', TrendingController::class),
 
+    /*
+     * The member's own preset choice.
+     *
+     * 🚨 The transformer is what keeps this safe. A preference is written from
+     * the client, so without it any member could store an arbitrary string that
+     * the document stamp would then put on <html> — and an attribute no token
+     * block matches leaves every colour falling back to inheritance, which is
+     * an unstyled forum for that one user and nobody else.
+     *
+     * '' is a real, kept value here: it means "follow the forum's setting",
+     * which is the picker's first option. Presets::valid() would turn it into
+     * 'wall' and quietly pin the member to a preset they never chose.
+     */
+    (new Extend\User())
+        ->registerPreference(
+            'cascadePreset',
+            fn ($value) => $value === '' || $value === null ? '' : Presets::valid($value),
+            ''
+        ),
+
     // -- Settings ------------------------------------------------------------
     //
     // Storage-key prefix:   ernestdefoe-cascade.*
@@ -109,6 +152,7 @@ return [
         ->serializeToForum('cascade.widget_follow',   'ernestdefoe-cascade.widget_follow',   'boolval', true)
         ->serializeToForum('cascade.engagement_bar',  'ernestdefoe-cascade.engagement_bar',  'strval',  'auto')
         ->serializeToForum('cascade.mobile_tabbar',   'ernestdefoe-cascade.mobile_tabbar',   'strval',  'extension')
+        ->serializeToForum('cascade.allow_user_preset', 'ernestdefoe-cascade.allow_user_preset', 'boolval', true)
 
         ->default('ernestdefoe-cascade.preset',          'wall')
         ->default('ernestdefoe-cascade.feed_density',    'excerpt_media')
@@ -118,7 +162,8 @@ return [
         ->default('ernestdefoe-cascade.widget_presence', '1')
         ->default('ernestdefoe-cascade.widget_follow',   '1')
         ->default('ernestdefoe-cascade.engagement_bar',  'auto')
-        ->default('ernestdefoe-cascade.mobile_tabbar',   'extension'),
+        ->default('ernestdefoe-cascade.mobile_tabbar',   'extension')
+        ->default('ernestdefoe-cascade.allow_user_preset', '1'),
 
     // Cascade deliberately adds no accent setting of its own - the forum's
     // primary colour in Appearance is the single source of truth, because core

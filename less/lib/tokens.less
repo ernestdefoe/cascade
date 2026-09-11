@@ -110,6 +110,75 @@
   --cs-shadow:      0 1px 2px rgba(0, 0, 0, .6);
 }
 
+// ── Stream: the Bluesky lineage ──────────────────────────────────────────────
+// Hairline rows like Timeline, but the separators are INSET to the content
+// column rather than spanning the card, the rhythm is looser, and the action
+// row uses pill hovers with the count beside the icon. That inset rule is the
+// signature: it is what stops a row reading as a slab and is the clearest thing
+// separating this from Timeline at a glance.
+[data-cascade-preset='stream'] {
+  --cs-feed-width:    604px;
+  --cs-rail-right:    324px;
+  --cs-gap:           0px;
+  --cs-radius:        12px;
+  --cs-media-radius:  12px;
+  --cs-media-height:  260px;
+  --cs-avatar:        42px;
+  --cs-row-pad-y:     14px;
+
+  --container-hd:     1180px;
+  --container-xl:     1180px;
+  --container-xxl:    1180px;
+}
+
+[data-cascade-preset='stream'][data-theme^='light'] {
+  --body-bg:        #FFFFFF;
+  --cs-surface:     #FFFFFF;
+  --cs-line:        #D4DBE2;
+  --cs-hover:       #F1F3F5;
+  --control-bg:     #F1F3F5;
+  --control-color:  #0B0F14;
+  --text-color:     #0B0F14;
+  --heading-color:  #0B0F14;
+  --muted-color:    #42576C;
+  --header-bg:      #FFFFFF;
+  --header-color:   #0B0F14;
+  --cs-shadow:      none;
+}
+
+// Bluesky's dim, not its lights-out: a cool slate rather than Timeline's navy
+// or Wall's neutral charcoal. Surface and ground are the same value on purpose
+// — the separators do all the dividing here, which is the point of the lineage.
+[data-cascade-preset='stream'][data-theme^='dark'] {
+  --body-bg:        #161E27;
+  --cs-surface:     #161E27;
+  --cs-line:        #2E4052;
+  --cs-hover:       #1E2936;
+  --control-bg:     #1E2936;
+  --control-color:  #F1F3F5;
+  --text-color:     #F1F3F5;
+  --heading-color:  #FFFFFF;
+  --muted-color:    #8D98A6;
+  --header-bg:      #161E27;
+  --header-color:   #F1F3F5;
+  --cs-shadow:      none;
+}
+
+[data-cascade-preset='stream'][data-theme='dark-hc'] {
+  --body-bg:        #000000;
+  --cs-surface:     #000000;
+  --cs-line:        #21303F;
+  --cs-hover:       #0D1520;
+  --control-bg:     #0D1520;
+  --muted-color:    #A6B0BC;
+  --header-bg:      #000000;
+}
+
+[data-cascade-preset='stream'][data-theme='light-hc'] {
+  --cs-line:        #B3BFCB;
+  --muted-color:    #2B3B4A;
+}
+
 // ── Timeline: the X lineage ──────────────────────────────────────────────────
 // No cards. A 600px column between two hairlines, a sticky tab strip, and an
 // action bar that stays quiet until it is hovered.
