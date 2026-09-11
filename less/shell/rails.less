@@ -111,16 +111,38 @@
     margin-top: 8px;
     color: var(--cs-accent);
     font-size: 14px;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: none;
+      opacity: .78;
+    }
   }
 }
 
+// A whole row is the target here, not a word in a sentence, so it gets a row's
+// feedback: the surface lifts under the pointer. An underline on a three-line
+// block just draws lines through the middle of a card.
 .Cascade-trend {
   display: block;
-  padding: 7px 0;
+  padding: 7px 10px;
+  margin: 0 -10px;
+  border-radius: var(--cs-radius);
   color: inherit;
+  text-decoration: none;
+  transition: background .12s ease;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     color: inherit;
+    text-decoration: none;
+    background: var(--cs-hover);
+  }
+
+  // Core underlines links on hover; a descendant would still pick it up.
+  &:hover * {
+    text-decoration: none;
   }
 
   &-context,
@@ -242,4 +264,13 @@
 .App--index .FofWidgets-bottomWidgetSection {
   margin-top: var(--cs-gap);
   margin-bottom: 0;
+}
+
+// Nothing in the rail underlines. Every link in here is a row or a control, not
+// a word inside a sentence, and an underline on those reads as damage rather
+// than as affordance.
+.Cascade-rail a,
+.Cascade-rail a:hover,
+.Cascade-rail a:focus {
+  text-decoration: none;
 }
