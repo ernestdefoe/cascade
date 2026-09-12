@@ -90,18 +90,35 @@ return [
             // The callback is deliberately untyped: core hands it either an
             // Eloquent\Builder or a Relation depending on how the load resolves,
             // and the two share no common base worth naming.
-            return $endpoint->eagerLoadWhere('lastPost', function ($query) {
-                // One extra query for the whole page, which buys the reply
-                // preview under every row. Same column discipline as firstPost.
-                return $query->select(['id', 'discussion_id', 'type', 'content']);
-            })->eagerLoadWhere('firstPost', function ($query) {
-                // `firstPost` is a belongsTo on `discussions.first_post_id`, so
-                // `posts.id` is the owner key and must stay selected or Eloquent
-                // cannot match the loaded models back. `type` keeps single-table
-                // inheritance working - without it every row hydrates as the
-                // base Post and the CommentPost check never passes.
-                return $query->select(['id', 'discussion_id', 'type', 'content']);
-            });
+            /*
+             * 🚨 The WHOLE row, not a column subset.
+             *
+             * These relations used to be narrowed to id, discussion_id, type
+             * and content. That is fine while nobody serialises them — and on
+             * a forum where nobody does, it is invisible. But the eager load
+             * is shared: the moment ANY other extension includes `firstPost`
+             * or `lastPost` on the discussion index, those posts are
+             * serialised from the models Cascade narrowed, and they go to the
+             * browser with `createdAt: null` and `number: null`.
+             *
+             * Flarum's store then holds a half-loaded Post, and core's
+             * PostStream does `post.createdAt().toISOString()` with no guard —
+             * so opening any discussion throws "Cannot read properties of null
+             * (reading 'toISOString')" and the whole thread renders blank.
+             * Reported from a forum running a trending-posts extension, and
+             * impossible to reproduce without one, which is exactly what made
+             * it look like somebody else's bug.
+             *
+             * The subset saved almost nothing anyway: `content` is by far the
+             * largest column and was always selected. Everything dropped was a
+             * handful of scalars on a row already being read.
+             *
+             * Rule of thumb: never narrow the columns of a relation other code
+             * can ask for. A private query may select what it likes; a shared
+             * one has to load a model that is safe to serialise.
+             */
+            return $endpoint->eagerLoadWhere('lastPost', fn ($query) => $query)
+                ->eagerLoadWhere('firstPost', fn ($query) => $query);
         }),
 
     // Reactions are additive and optional: with fof/reactions disabled these
