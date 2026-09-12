@@ -64,9 +64,60 @@
      * The trailing gutter goes too: it is there to separate the rail from the
      * feed column beside it, and down here there is no column beside it.
      */
+    /*
+     * 🚨 min-width: 0 on both, and it is not optional.
+     *
+     * Making the container a flex column turns these into flex items, and a
+     * flex item defaults to `min-width: auto` — it refuses to shrink below its
+     * own min-content width. The mobile nav lays its items out in a strip that
+     * measures 1822px, so the sidebar refused to be narrower than that and the
+     * whole PAGE scrolled sideways at tablet width. Caught by asserting no
+     * horizontal overflow, which is the only reason it did not ship.
+     */
     .Page-sidebar {
       position: static;
       padding-inline-end: 0;
+      min-width: 0;
+      /* Below the feed. See the container rule underneath. */
+      order: 1;
+
+      /*
+       * 🚨 align-self, undone explicitly.
+       *
+       * Pinning the rail on desktop sets `align-self: flex-start`, which is
+       * what lets a sticky sidebar be shorter than the feed. In a COLUMN flex
+       * container that same declaration means "size to your content on the
+       * cross axis" — and align-self beats the container's align-items, so the
+       * sidebar sized itself to the mobile nav strip: 1842px inside a 768px
+       * page, scrolling the whole document sideways. min-width: 0 does not
+       * help, because the item was never being asked to shrink.
+       */
+      align-self: stretch;
+    }
+
+    .Page-content {
+      min-width: 0;
+      order: 0;
+    }
+
+    /*
+     * The sidebar goes BELOW the discussion list here.
+     *
+     * The nav links are hoisted into the header dropdown on a small screen, so
+     * what is left in the sidebar is the widgets — measured at 247px on a
+     * 390px phone, which put the first discussion 412px down the page. Half
+     * the opening screen of a FEED theme was everything except the feed.
+     *
+     * 🚨 Two things have to change together. The container is `display: block`
+     * at this width, so `order` on its own does nothing — it needs to be a flex
+     * column first. And the desktop rule sets `align-items: flex-start`, which
+     * in a column shrinks every child to its own content width instead of the
+     * full screen; stretch has to be restored explicitly or the feed collapses.
+     */
+    .Page-container {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
     }
   }
 
