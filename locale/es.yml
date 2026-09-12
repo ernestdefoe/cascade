@@ -13,9 +13,6 @@ ernestdefoe-cascade:
       heading: Estilo del feed
       help: Cómo se muestran las discusiones para ti. No cambia nada para los demás.
       follow_forum: Usar el valor predeterminado del foro
-      wall: Estilo Facebook — tarjetas
-      timeline: Estilo X — filas
-      stream: Estilo Bluesky — filas con sangría
       save_failed: No se pudo guardar tu estilo de feed. Inténtalo de nuevo.
 
     reactions:
@@ -63,3 +60,69 @@ ernestdefoe-cascade:
   admin:
     settings:
       title: "Cascade"
+
+      preset_label: Estilo predeterminado
+      preset_help: >-
+        El aspecto que verán todos los miembros salvo que elijan el suyo más
+        abajo. El estilo Facebook coloca cada discusión en su propia tarjeta
+        sobre un fondo gris, con una barra de interacción ancha y etiquetada. El
+        estilo X las muestra como filas separadas por una línea fina en una sola
+        columna. El estilo Bluesky mantiene la columna única, pero aplica
+        sangría a los separadores, amplía el espaciado y da a las acciones un
+        resaltado en forma de píldora. Los tres comparten el mismo diseño y los
+        mismos ajustes; el cambio se aplica al cargar la página de nuevo.
+
+      allow_user_preset_label: Permitir que cada miembro elija el suyo
+      allow_user_preset_help: >-
+        Añade un selector de estilo a la página de ajustes de cada miembro. Su
+        elección solo le afecta a él, y quien no elija ninguno mantiene el
+        predeterminado del foro. Desactívalo para que todo el foro use un único
+        estilo.
+
+      widget_hashtags_label: Nube de hashtags
+      widget_hashtags_help: >-
+        Una nube ponderada con los hashtags más usados en la columna derecha,
+        dimensionada por posición y no por número bruto, para que siga siendo
+        legible por desiguales que sean las cifras. Solo se muestra si la
+        extensión Hashtags está activada; sin ella este ajuste no hace nada.
+
+      hashtag_count_label: Hashtags en la nube
+      hashtag_count_help: >-
+        Entre 6 y 60. Cuantos más, más densa será la nube y más difícil
+        distinguir las entradas más pequeñas.
+
+      feed_density_label: Qué muestra cada fila
+      feed_density_help: >-
+        El extracto con imagen es lo que hace que la lista se lea como un feed.
+        Solo el título devuelve a Cascade a una lista de discusiones
+        convencional y omite por completo la consulta del extracto.
+      feed_density_excerpt_media: Extracto e imagen
+      feed_density_excerpt: Solo el extracto
+      feed_density_title: Solo el título
+
+      excerpt_length_label: Longitud del extracto (caracteres)
+      excerpt_length_help: >-
+        Entre 40 y 600. Los extractos largos hacen que se vean menos discusiones
+        sin desplazarse, y aumentan algo el tamaño de cada página de la lista.
+
+      widget_trending_label: Mostrar el widget de Tendencias
+      widget_trending_help: >-
+        Ordena las etiquetas según cuántas discusiones recibieron realmente en
+        los últimos siete días, recalculado cada hora. Necesita flarum/tags; sin
+        él, el widget se oculta solo.
+
+      engagement_bar_label: Barra de interacción
+      engagement_bar_help: >-
+        Automático muestra Responder y Compartir en cada fila, y añade un
+        control de reacciones en la página de la discusión cuando flarum/likes o
+        fof/reactions está activado. Cascade nunca incluye reacciones propias,
+        así que sin ninguno de los dos no hay control de reacciones que mostrar.
+      engagement_bar_auto: Automático
+      engagement_bar_on: Mostrar siempre
+      engagement_bar_off: Ocultar
+
+  lib:
+    preset:
+      wall: Estilo Facebook — tarjetas
+      timeline: Estilo X — filas
+      stream: Estilo Bluesky — filas con sangría

@@ -44,7 +44,7 @@ export default function addPresetPicker() {
     const options = { '': app.translator.trans('ernestdefoe-cascade.forum.preset.follow_forum') };
 
     PRESETS.forEach((key) => {
-      options[key] = app.translator.trans(`ernestdefoe-cascade.forum.preset.${key}`);
+      options[key] = app.translator.trans(`ernestdefoe-cascade.lib.preset.${key}`);
     });
 
     items.add(
