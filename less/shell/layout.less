@@ -76,14 +76,19 @@
   align-self: flex-start;
 
   /*
-   * A nav taller than the viewport would otherwise pin its top and bury its
-   * last items off-screen with no way to reach them. Capped to the space below
-   * the header, scrolling inside itself when it does not fit, and the scrollbar
-   * only appears when it is actually needed.
+   * 🚨 No max-height and no overflow here, deliberately.
+   *
+   * An earlier version capped the height and set `overflow-y: auto` so a nav
+   * taller than the window could scroll inside itself. The cost was invisible
+   * until something needed to escape the box: per spec, a non-visible value on
+   * one axis forces the other from `visible` to `auto`, so the rail silently
+   * became a clipping container on BOTH axes — and the sidebar holds dropdowns,
+   * which open outside it.
+   *
+   * A tall nav whose last item sits below the fold is a much smaller problem
+   * than a menu that cannot be seen, and it is also how this behaved before the
+   * rail was pinned at all.
    */
-  max-height: calc(100vh - var(--header-height) - 32px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 // The nav no longer positions itself; the column it sits in does.
@@ -102,3 +107,23 @@
 // real controls, and a feed that quietly drops the sort control is a feed whose
 // users cannot find their own discussions. It is restyled into the head of the
 // feed column instead — see feed/head.less.
+
+/*
+ * A trailing gutter on the left rail, for the two gapless presets.
+ *
+ * Wall separates its columns with `--cs-gap`, so the rail already has air to
+ * its right. Timeline and Stream set that gap to 0 on purpose — their feed
+ * column is defined by its own borders, not by whitespace — which left the nav
+ * and the sidebar widgets running hard against the feed's edge: measured at
+ * exactly 0px for the Calendar link, the pulse caption and the leaderboard
+ * count. Text touching a boundary reads as clipped even when nothing is cut.
+ *
+ * Padding rather than a wider rail, so the shell's column arithmetic and the
+ * width ladder stay untouched.
+ */
+[data-cascade-preset='timeline'],
+[data-cascade-preset='stream'] {
+  .App--index .Page-sidebar {
+    padding-inline-end: 18px;
+  }
+}

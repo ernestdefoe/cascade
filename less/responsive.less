@@ -59,13 +59,14 @@
 
     /*
      * Undo the pinned left rail. On a phone the sidebar is a dropdown, not a
-     * column: leaving it sticky with a viewport-height cap gives the dropdown
-     * its own scrollbar and pins it over the feed.
+     * column, and a sticky dropdown hangs over the feed.
+     *
+     * The trailing gutter goes too: it is there to separate the rail from the
+     * feed column beside it, and down here there is no column beside it.
      */
     .Page-sidebar {
       position: static;
-      max-height: none;
-      overflow: visible;
+      padding-inline-end: 0;
     }
   }
 
