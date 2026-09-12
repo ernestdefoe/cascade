@@ -188,6 +188,22 @@
     padding-inline-end: 20px;
   }
 
+  /*
+   * React / Reply / Share are the primary actions here, and they measured
+   * 104x26. Apple and Android both put the floor for a touch target at
+   * 44pt/48dp; 26px is reachable with a fingertip only if you aim.
+   *
+   * 🚨 Phone AND tablet. Scoping this to @phone first left a tablet — a touch
+   * device with no pointer at all — on the 26px bar, which is the one place
+   * the mistake is least likely to be noticed by someone testing on a desktop.
+   *
+   * min-height rather than padding, so the row grows into a proper target
+   * without moving the label against its icon. Desktop keeps the tighter bar.
+   */
+  .Cascade-engagement-action {
+    min-height: 44px;
+  }
+
   .Cascade-media {
     --cs-media-height: 200px;
   }
@@ -195,20 +211,9 @@
 
 // ── Phone only ───────────────────────────────────────────────────────────────
 @media @phone {
-  /*
-   * React / Reply / Share are the primary actions on a phone, and they were
-   * 104x26 — measured. Both Apple and Android put the floor for a touch target
-   * at 44pt/48dp, and 26px is comfortably under it: reachable with a fingertip
-   * only if you aim.
-   *
-   * min-height rather than padding, so the row grows into a proper target
-   * without moving the label or the icon relative to each other. Desktop keeps
-   * its tighter bar — a pointer does not need the margin.
-   */
   .Cascade-engagement-action {
     font-size: 13px;
     gap: 6px;
-    min-height: 44px;
   }
 
   // Labels would wrap at this width; the icon carries the meaning and the
