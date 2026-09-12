@@ -195,9 +195,20 @@
 
 // ── Phone only ───────────────────────────────────────────────────────────────
 @media @phone {
+  /*
+   * React / Reply / Share are the primary actions on a phone, and they were
+   * 104x26 — measured. Both Apple and Android put the floor for a touch target
+   * at 44pt/48dp, and 26px is comfortably under it: reachable with a fingertip
+   * only if you aim.
+   *
+   * min-height rather than padding, so the row grows into a proper target
+   * without moving the label or the icon relative to each other. Desktop keeps
+   * its tighter bar — a pointer does not need the margin.
+   */
   .Cascade-engagement-action {
     font-size: 13px;
     gap: 6px;
+    min-height: 44px;
   }
 
   // Labels would wrap at this width; the icon carries the meaning and the
