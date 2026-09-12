@@ -34,11 +34,11 @@
 //          >=1600       244    18    904    18    264    1448     1456
 //          >=2000       252    20   1004    20    280    1576     1584
 //
-//   timeline / stream, gapless - the feed absorbs the gaps:
-//          >=1200 base  228     0    718     0    234    1180     1180
-//          >=1400       236     0    864     0    252    1352     1360
-//          >=1600       244     0    940     0    264    1448     1456
-//          >=2000       252     0   1044     0    280    1576     1584
+//   timeline / stream - 18px gaps, so the rail is not flush against the feed:
+//          >=1200 base  228    18    682    18    234    1180     1180
+//          >=1400       236    18    828    18    252    1352     1360
+//          >=1600       244    18    904    18    264    1448     1456
+//          >=2000       252    18   1008    18    280    1576     1584
 //
 // The base band is sized to survive a viewport of exactly 1200 once a scrollbar
 // is taken out of it - 1180 is the ceiling there, and the rails give ground so
@@ -63,7 +63,7 @@
   [data-cascade-preset='timeline'],
   [data-cascade-preset='stream'] {
     --cs-rail-left:    228px;
-    --cs-feed-width:   718px;
+    --cs-feed-width:   682px;
     --cs-rail-right:   234px;
 
     --container-hd:    1180px;
@@ -85,7 +85,7 @@
   [data-cascade-preset='timeline'],
   [data-cascade-preset='stream'] {
     --cs-rail-left:    236px;
-    --cs-feed-width:   864px;
+    --cs-feed-width:   828px;
     --cs-rail-right:   252px;
 
     --container-hd:    1360px;
@@ -108,7 +108,7 @@
   [data-cascade-preset='timeline'],
   [data-cascade-preset='stream'] {
     --cs-rail-left:    244px;
-    --cs-feed-width:   940px;
+    --cs-feed-width:   904px;
     --cs-rail-right:   264px;
     --cs-media-height: 350px;
 
@@ -132,7 +132,7 @@
   [data-cascade-preset='timeline'],
   [data-cascade-preset='stream'] {
     --cs-rail-left:    252px;
-    --cs-feed-width:   1044px;
+    --cs-feed-width:   1008px;
     --cs-rail-right:   280px;
     --cs-avatar:       46px;
     --cs-media-height: 400px;

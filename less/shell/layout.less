@@ -107,23 +107,3 @@
 // real controls, and a feed that quietly drops the sort control is a feed whose
 // users cannot find their own discussions. It is restyled into the head of the
 // feed column instead — see feed/head.less.
-
-/*
- * A trailing gutter on the left rail, for the two gapless presets.
- *
- * Wall separates its columns with `--cs-gap`, so the rail already has air to
- * its right. Timeline and Stream set that gap to 0 on purpose — their feed
- * column is defined by its own borders, not by whitespace — which left the nav
- * and the sidebar widgets running hard against the feed's edge: measured at
- * exactly 0px for the Calendar link, the pulse caption and the leaderboard
- * count. Text touching a boundary reads as clipped even when nothing is cut.
- *
- * Padding rather than a wider rail, so the shell's column arithmetic and the
- * width ladder stay untouched.
- */
-[data-cascade-preset='timeline'],
-[data-cascade-preset='stream'] {
-  .App--index .Page-sidebar {
-    padding-inline-end: 18px;
-  }
-}
