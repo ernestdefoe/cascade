@@ -1,0 +1,65 @@
+ernestdefoe-cascade:
+
+  # Spanish (informal / tuteo), matching flarum-lang/spanish's own vocabulary so
+  # Cascade does not introduce a second word for something core already names:
+  #   discussions → Discusiones · posts → Publicaciones · reply → Responder
+  #   start a discussion → Crear discusión · loading → Cargando...
+  #
+  # Reviewed by a native speaker is better than not; corrections welcome.
+
+  forum:
+
+    preset:
+      heading: Estilo del feed
+      help: Cómo se muestran las discusiones para ti. No cambia nada para los demás.
+      follow_forum: Usar el valor predeterminado del foro
+      wall: Estilo Facebook — tarjetas
+      timeline: Estilo X — filas
+      stream: Estilo Bluesky — filas con sangría
+      save_failed: No se pudo guardar tu estilo de feed. Inténtalo de nuevo.
+
+    reactions:
+      thumbsup: "Me gusta"
+      heart: "Me encanta"
+      laughing: "Jaja"
+      tada: "Celebrar"
+      confused: "Me confunde"
+      thumbsdown: "No me gusta"
+
+    composer:
+      placeholder: "Crear discusión…"
+      cannot_start: "No tienes permiso para crear discusiones"
+
+    row:
+      react_button: "Reaccionar"
+      react_failed: "No se pudo guardar tu reacción. Inténtalo de nuevo en un momento."
+      reply_button: "Responder"
+      share_button: "Compartir"
+      share_copied: "Enlace copiado"
+      media_more: "+{count}"
+      view_replies: "{count, plural, one {Ver # respuesta más} other {Ver las # respuestas}}"
+      see_more: "Ver más"
+      see_less: "Ver menos"
+      open_post: "Abrir esta discusión"
+      see_more_loading: "Cargando…"
+      replies_failed: "No se pudieron cargar las respuestas. Inténtalo de nuevo en un momento."
+
+    modal:
+      title: "Publicación de {username}"
+      replies_title: "{count, plural, one {# respuesta} other {# respuestas}}"
+      no_replies: "Aún no hay respuestas."
+      reply_button: "Escribe una respuesta"
+      open_full: "Abrir la página completa"
+
+    rail:
+      hashtags_title: Hashtags
+      hashtags_count: "{count, plural, one {# publicación} other {# publicaciones}}"
+      trending_title: "Tendencias"
+      trending_week: "Tendencias de esta semana"
+      trending_month: "Tendencias de este mes"
+      trending_all: "Lo más comentado"
+      trending_count: "{count, plural, one {# discusión} other {# discusiones}}"
+
+  admin:
+    settings:
+      title: "Cascade"
