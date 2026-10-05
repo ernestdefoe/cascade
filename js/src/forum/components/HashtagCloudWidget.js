@@ -3,6 +3,7 @@ import Component from 'flarum/common/Component';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import Link from 'flarum/common/components/Link';
 import { setting } from '../settings';
+import railRequest from '../railCache';
 
 /**
  * A weighted cloud of the forum's most-used hashtags.
@@ -21,16 +22,14 @@ export default class HashtagCloudWidget extends Component {
     this.loading = true;
     this.tags = [];
 
-    app
-      .request({
-        method: 'GET',
-        url: `${app.forum.attribute('apiUrl')}/hashtags`,
-        // Asked for by popularity, but sorted again below: the endpoint's sort
-        // parameters are that extension's business and could be renamed, while
-        // postCount is in the payload either way. Over-fetch a little and rank
-        // here, so a sort name changing upstream costs ordering, not the widget.
-        params: { page: { limit: 60 } },
-      })
+    railRequest(
+      `${app.forum.attribute('apiUrl')}/hashtags`,
+      // Asked for by popularity, but sorted again below: the endpoint's sort
+      // parameters are that extension's business and could be renamed, while
+      // postCount is in the payload either way. Over-fetch a little and rank
+      // here, so a sort name changing upstream costs ordering, not the widget.
+      { page: { limit: 60 } }
+    )
       .then((response) => {
         this.tags = rank(response?.data ?? [], count());
         this.loading = false;

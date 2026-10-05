@@ -2,6 +2,7 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import Link from 'flarum/common/components/Link';
+import railRequest from '../railCache';
 
 /**
  * Tags ranked by how many discussions they actually received in the last
@@ -18,8 +19,7 @@ export default class TrendingWidget extends Component {
     this.loading = true;
     this.trends = [];
 
-    app
-      .request({ method: 'GET', url: `${app.forum.attribute('apiUrl')}/cascade/trending` })
+    railRequest(`${app.forum.attribute('apiUrl')}/cascade/trending`)
       .then((response) => {
         this.trends = (response && response.data) || [];
         this.loading = false;
