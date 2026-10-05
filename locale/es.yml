@@ -33,7 +33,6 @@ ernestdefoe-cascade:
       reply_button: "Responder"
       share_button: "Compartir"
       share_copied: "Enlace copiado"
-      media_more: "+{count}"
       view_replies: "{count, plural, one {Ver # respuesta más} other {Ver las # respuestas}}"
       see_more: "Ver más"
       see_less: "Ver menos"
