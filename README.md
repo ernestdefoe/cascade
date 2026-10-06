@@ -200,6 +200,10 @@ preset and colour scheme you were in, and a screenshot.
 
 ---
 
+## Discuss
+
+Questions, ideas and release notes: [Cascade on discuss.flarum.org](https://discuss.flarum.org/d/39844-cascade-a-social-media-inspired-theme-built-using-ai).
+
 ## Licence
 
 [MIT](LICENSE). Free, and free to stay free — use it, fork it, ship it in
