@@ -200,9 +200,11 @@ preset and colour scheme you were in, and a screenshot.
 
 ---
 
-## Discuss
+## Support
 
-Questions, ideas and release notes: [Cascade on discuss.flarum.org](https://discuss.flarum.org/d/39844-cascade-a-social-media-inspired-theme-built-using-ai).
+- **Support forum:** [Cascade on ernestdefoe.online](https://ernestdefoe.online/d/90)
+- **Flarum community:** [Cascade on discuss.flarum.org](https://discuss.flarum.org/d/39844-cascade-a-social-media-inspired-theme-built-using-ai)
+- **Bug reports:** [GitHub issues](https://github.com/ernestdefoe/cascade/issues)
 
 ## Licence
 
