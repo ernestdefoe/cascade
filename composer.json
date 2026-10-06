@@ -18,6 +18,9 @@
             "email": "ernestdefoe@gmail.com"
         }
     ],
+    "support": {
+        "forum": "https://discuss.flarum.org/d/39844-cascade-a-social-media-inspired-theme-built-using-ai"
+    },
     "require": {
         "php": "^8.3",
         "flarum/core": "^2.0",
