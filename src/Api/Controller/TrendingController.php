@@ -135,16 +135,16 @@ class TrendingController implements RequestHandlerInterface
         }
 
         $rows = $query->get([
-                'tags.name as name',
-                'tags.slug as slug',
-                $this->db->raw('COUNT(*) as discussion_count'),
-            ]);
+            'tags.name as name',
+            'tags.slug as slug',
+            $this->db->raw('COUNT(*) as discussion_count'),
+        ]);
 
         return $rows->map(fn ($row) => [
-            'name'  => (string) $row->name,
-            'slug'  => (string) $row->slug,
+            'name' => (string) $row->name,
+            'slug' => (string) $row->slug,
             'count' => (int) $row->discussion_count,
-            'days'  => $days,
+            'days' => $days,
         ])->all();
     }
 
