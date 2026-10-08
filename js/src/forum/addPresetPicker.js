@@ -51,10 +51,7 @@ export default function addPresetPicker() {
       'cascadePreset',
       // Same shape core gives its own sections, so this reads as one of them
       // rather than as something bolted on underneath.
-      <FieldSet
-        className="Settings-cascadePreset FieldSet--min"
-        label={app.translator.trans('ernestdefoe-cascade.forum.preset.heading')}
-      >
+      <FieldSet className="Settings-cascadePreset FieldSet--min" label={app.translator.trans('ernestdefoe-cascade.forum.preset.heading')}>
         <Select value={user.preferences()?.cascadePreset ?? ''} options={options} onchange={(value) => apply(user, value)} />
         <span className="helpText">{app.translator.trans('ernestdefoe-cascade.forum.preset.help')}</span>
       </FieldSet>,

@@ -56,10 +56,7 @@ export default class ReactionControl extends Component {
 
         <button
           type="button"
-          className={
-            'Cascade-engagement-action Cascade-react-button Button--ua-reset' +
-            (current ? ' Cascade-engagement-action--active' : '')
-          }
+          className={'Cascade-engagement-action Cascade-react-button Button--ua-reset' + (current ? ' Cascade-engagement-action--active' : '')}
           data-cs-action="react"
           data-cs-reaction={current ? current.identifier() : ''}
           aria-haspopup="true"
@@ -92,10 +89,7 @@ export default class ReactionControl extends Component {
             type="button"
             key={reaction.id()}
             role="menuitem"
-            className={
-              'Cascade-reactOption Button--ua-reset' +
-              (current && current.id() === reaction.id() ? ' Cascade-reactOption--active' : '')
-            }
+            className={'Cascade-reactOption Button--ua-reset' + (current && current.id() === reaction.id() ? ' Cascade-reactOption--active' : '')}
             // The stagger is what makes the row unfurl rather than appear.
             // Inline because it is per-index data, not a style decision.
             style={{ animationDelay: i * 32 + 'ms' }}

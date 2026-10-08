@@ -88,15 +88,9 @@ export default class DiscussionModal extends Modal {
         <h3 className="Cascade-modal-title">{discussion.title()}</h3>
 
         <header className="Cascade-modal-author">
-          {user ? (
-            <Link href={app.route.user(user)}>{Avatar.component({ user, title: '' })}</Link>
-          ) : (
-            Avatar.component({ user: null })
-          )}
+          {user ? <Link href={app.route.user(user)}>{Avatar.component({ user, title: '' })}</Link> : Avatar.component({ user: null })}
           <div>
-            <div className="Cascade-author-name">
-              {user ? <Link href={app.route.user(user)}>{username(user)}</Link> : username(user)}
-            </div>
+            <div className="Cascade-author-name">{user ? <Link href={app.route.user(user)}>{username(user)}</Link> : username(user)}</div>
             <div className="Cascade-author-sub">{humanTime(discussion.createdAt())}</div>
           </div>
         </header>
@@ -113,9 +107,7 @@ export default class DiscussionModal extends Modal {
 
         {/* Images after the words, the way a social post reads: the text is
             the caption, the pictures are what it is captioning. */}
-        {discussion.cascadeImages && (discussion.cascadeImages() || []).length > 0 && (
-          <MediaMosaic discussion={discussion} interactive={false} />
-        )}
+        {discussion.cascadeImages && (discussion.cascadeImages() || []).length > 0 && <MediaMosaic discussion={discussion} interactive={false} />}
       </article>
     );
   }
@@ -126,11 +118,7 @@ export default class DiscussionModal extends Modal {
     }
 
     if (!state.posts.length) {
-      return (
-        <p className="Cascade-modal-empty">
-          {app.translator.trans('ernestdefoe-cascade.forum.modal.no_replies')}
-        </p>
-      );
+      return <p className="Cascade-modal-empty">{app.translator.trans('ernestdefoe-cascade.forum.modal.no_replies')}</p>;
     }
 
     return (

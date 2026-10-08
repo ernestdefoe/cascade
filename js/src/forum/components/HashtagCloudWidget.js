@@ -51,11 +51,7 @@ export default class HashtagCloudWidget extends Component {
       <section className="Cascade-widget Cascade-widget--hashtags">
         <h3 className="Cascade-widget-title">{app.translator.trans('ernestdefoe-cascade.forum.rail.hashtags_title')}</h3>
 
-        {this.loading ? (
-          <LoadingIndicator display="block" size="small" />
-        ) : (
-          <div className="Cascade-hashtagCloud">{this.tags.map(hashtagView)}</div>
-        )}
+        {this.loading ? <LoadingIndicator display="block" size="small" /> : <div className="Cascade-hashtagCloud">{this.tags.map(hashtagView)}</div>}
       </section>
     );
   }

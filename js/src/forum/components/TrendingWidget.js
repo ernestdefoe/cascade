@@ -39,9 +39,7 @@ export default class TrendingWidget extends Component {
 
     return (
       <section className="Cascade-widget Cascade-widget--trending">
-        <h3 className="Cascade-widget-title">
-          {app.translator.trans('ernestdefoe-cascade.forum.rail.trending_title')}
-        </h3>
+        <h3 className="Cascade-widget-title">{app.translator.trans('ernestdefoe-cascade.forum.rail.trending_title')}</h3>
 
         {/*
           The window belongs to the WIDGET, not to each row. TrendingController
@@ -53,9 +51,7 @@ export default class TrendingWidget extends Component {
           Invisible on a forum with one trending tag, which is why it survived:
           it only looks wrong once there are two rows to compare.
         */}
-        {!this.loading && this.trends.length > 0 && (
-          <div className="Cascade-widget-context">{contextLabel(this.trends[0].days)}</div>
-        )}
+        {!this.loading && this.trends.length > 0 && <div className="Cascade-widget-context">{contextLabel(this.trends[0].days)}</div>}
 
         {this.loading ? <LoadingIndicator display="block" size="small" /> : this.trends.map(trendView)}
       </section>
@@ -81,9 +77,7 @@ function trendView(trend) {
   return (
     <Link className="Cascade-trend" href={app.route('tag', { tags: trend.slug })} key={trend.slug}>
       <div className="Cascade-trend-name">{trend.name}</div>
-      <div className="Cascade-trend-count">
-        {app.translator.trans('ernestdefoe-cascade.forum.rail.trending_count', { count: trend.count })}
-      </div>
+      <div className="Cascade-trend-count">{app.translator.trans('ernestdefoe-cascade.forum.rail.trending_count', { count: trend.count })}</div>
     </Link>
   );
 }

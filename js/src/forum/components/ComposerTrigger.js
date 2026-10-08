@@ -26,11 +26,7 @@ export default class ComposerTrigger extends Component {
     const canStart = app.forum.attribute('canStartDiscussion') || !user;
 
     const label = extractText(
-      app.translator.trans(
-        canStart
-          ? 'ernestdefoe-cascade.forum.composer.placeholder'
-          : 'ernestdefoe-cascade.forum.composer.cannot_start'
-      )
+      app.translator.trans(canStart ? 'ernestdefoe-cascade.forum.composer.placeholder' : 'ernestdefoe-cascade.forum.composer.cannot_start')
     );
 
     return (

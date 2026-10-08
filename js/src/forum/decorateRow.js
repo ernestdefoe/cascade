@@ -84,9 +84,7 @@ function authorView(discussion) {
   return (
     <div className="Cascade-author">
       <div className="Cascade-author-meta">
-        <div className="Cascade-author-name">
-          {user ? <Link href={app.route.user(user)}>{username(user)}</Link> : username(user)}
-        </div>
+        <div className="Cascade-author-name">{user ? <Link href={app.route.user(user)}>{username(user)}</Link> : username(user)}</div>
         <div className="Cascade-author-sub">{humanTime(discussion.createdAt())}</div>
       </div>
     </div>
@@ -169,29 +167,15 @@ function engagementView(discussion) {
     <div className="Cascade-engagement">
       {canReact && <ReactionControl discussion={discussion} />}
 
-      <button
-        type="button"
-        className="Cascade-engagement-action Button--ua-reset"
-        data-cs-action="reply"
-        onclick={() => openModal(discussion)}
-      >
+      <button type="button" className="Cascade-engagement-action Button--ua-reset" data-cs-action="reply" onclick={() => openModal(discussion)}>
         <Icon name="far fa-comment" />
-        <span className="Cascade-engagement-label">
-          {app.translator.trans('ernestdefoe-cascade.forum.row.reply_button')}
-        </span>
+        <span className="Cascade-engagement-label">{app.translator.trans('ernestdefoe-cascade.forum.row.reply_button')}</span>
         {replies > 0 && <span className="Cascade-engagement-count">{replies}</span>}
       </button>
 
-      <button
-        type="button"
-        className="Cascade-engagement-action Button--ua-reset"
-        data-cs-action="share"
-        onclick={(e) => share(e, discussion)}
-      >
+      <button type="button" className="Cascade-engagement-action Button--ua-reset" data-cs-action="share" onclick={(e) => share(e, discussion)}>
         <Icon name="fas fa-share-from-square" />
-        <span className="Cascade-engagement-label">
-          {app.translator.trans('ernestdefoe-cascade.forum.row.share_button')}
-        </span>
+        <span className="Cascade-engagement-label">{app.translator.trans('ernestdefoe-cascade.forum.row.share_button')}</span>
       </button>
 
       {reactionPips(discussion)}
@@ -242,8 +226,7 @@ function share(e, discussion) {
 
   const url = app.forum.attribute('baseUrl') + app.route.discussion(discussion);
 
-  const copied = () =>
-    app.alerts.show({ type: 'success' }, app.translator.trans('ernestdefoe-cascade.forum.row.share_copied'));
+  const copied = () => app.alerts.show({ type: 'success' }, app.translator.trans('ernestdefoe-cascade.forum.row.share_copied'));
 
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(url).then(copied, () => window.prompt('', url));

@@ -38,10 +38,14 @@ Discussion.prototype.cascadeUserReaction = Model.attribute('cascadeUserReaction'
 // it, and the forum would get a fourth column instead.
 //
 // Core sorts initializers by priority, descending.
-app.initializers.add('ernestdefoe-cascade', () => {
-  decorateRow();
-  addComposerTrigger();
-  addRightRail();
-  addPresetPicker();
-  dontTranslateAvatars();
-}, -100);
+app.initializers.add(
+  'ernestdefoe-cascade',
+  () => {
+    decorateRow();
+    addComposerTrigger();
+    addRightRail();
+    addPresetPicker();
+    dontTranslateAvatars();
+  },
+  -100
+);
