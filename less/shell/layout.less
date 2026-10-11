@@ -22,6 +22,14 @@
   --gap: var(--cs-gap);
 }
 
+// ...flush with each other, not with the header. With the columns' own top
+// margins zeroed, a forum with no hero put the feed head and the left rail
+// hard against the header (sMati, 2026-10-11). One feed gap above them, the
+// same space that separates the cards.
+.App--index .Page-container {
+  padding-top: var(--cs-gap);
+}
+
 .App--index {
   .Page-sidebar {
     --sidebar-width: var(--cs-rail-left);
