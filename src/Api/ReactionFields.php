@@ -68,14 +68,14 @@ class ReactionFields
                     // serializer a closure; the first one resolved loads every
                     // registered post in one batch (it no longer primes the
                     // resolver from the discussion list).
-                    if (method_exists($this->resolver, 'deferCounts')) {
+                    if (method_exists($this->resolver, 'deferCounts')) { // @phpstan-ignore function.alreadyNarrowedType (absent on the 2.0.0 betas)
                         $deferred = $this->resolver->deferCounts($postId, $context->request);
 
                         return fn () => $shape($deferred());
                     }
 
                     // 2.0.0 betas: already primed for every row's first post.
-                    return $shape($this->resolver->countsFor($postId));
+                    return $shape($this->resolver->countsFor($postId)); // @phpstan-ignore arguments.count (the betas' signature)
                 }),
 
             Schema\Number::make('cascadeUserReaction')
@@ -87,7 +87,7 @@ class ReactionFields
 
                     // Deferred on >= 2.0.1 for the same one-batch load; the
                     // betas take the same arguments and are already primed.
-                    $method = method_exists($this->resolver, 'deferUserReaction') ? 'deferUserReaction' : 'userReactionFor';
+                    $method = method_exists($this->resolver, 'deferUserReaction') ? 'deferUserReaction' : 'userReactionFor'; // @phpstan-ignore function.alreadyNarrowedType
 
                     return $this->resolver->{$method}(
                         (int) $discussion->first_post_id,
