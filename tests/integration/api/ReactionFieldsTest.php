@@ -24,6 +24,7 @@ class ReactionFieldsTest extends TestCase
             User::class => [
                 $this->normalUser(),
                 ['id' => 3, 'username' => 'another', 'email' => 'another@machine.local', 'password' => 'too-obscure', 'is_email_confirmed' => 1],
+                ['id' => 4, 'username' => 'third', 'email' => 'third@machine.local', 'password' => 'too-obscure', 'is_email_confirmed' => 1],
             ],
             Discussion::class => [
                 ['id' => 1, 'title' => 'Reacted to', 'created_at' => Carbon::now(), 'user_id' => 2, 'first_post_id' => 1, 'last_post_id' => 1, 'comment_count' => 1, 'last_posted_at' => Carbon::now()],
@@ -64,7 +65,7 @@ class ReactionFieldsTest extends TestCase
         $this->app();
         $this->react(2, 1, 'thumbsup');
         $this->react(3, 1, 'thumbsup');
-        $this->react(3, 1, 'heart');
+        $this->react(4, 1, 'heart');
 
         $thumbsup = $this->database()->table('reactions')->where('identifier', 'thumbsup')->value('id');
         $heart = $this->database()->table('reactions')->where('identifier', 'heart')->value('id');
@@ -95,5 +96,26 @@ class ReactionFieldsTest extends TestCase
         foreach (['cascadeFirstPostId', 'cascadeReactionCounts', 'cascadeUserReaction'] as $field) {
             $this->assertArrayNotHasKey($field, $attributes);
         }
+    }
+
+    #[Test]
+    public function every_row_is_loaded_in_one_batch()
+    {
+        $this->app();
+        $this->react(2, 1, 'thumbsup');
+        $this->react(2, 2, 'heart');
+
+        $queries = 0;
+        $this->database()->listen(function ($query) use (&$queries) {
+            if (str_contains($query->sql, 'post_reactions')) {
+                $queries++;
+            }
+        });
+
+        $rows = $this->index(2);
+
+        $this->assertNotNull($rows[1]['cascadeUserReaction']);
+        $this->assertNotNull($rows[2]['cascadeUserReaction']);
+        $this->assertSame(2, $queries, 'One counts query and one user-reaction query for the whole page, not one per row');
     }
 }

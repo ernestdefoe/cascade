@@ -15,11 +15,12 @@ use FoF\Reactions\ReactionCountResolver;
  * Enough about the opening post's reactions to draw a working reaction control
  * on a feed card, and nothing more.
  *
- * This costs zero extra queries. fof/reactions already primes its
- * ReactionCountResolver with every discussion's `first_post_id` before the
- * index endpoint serialises (see its own beforeSerialization hook), precisely
- * so that per-post lookups hit a request-scoped memo instead of the database.
- * Cascade reads that same memo.
+ * This costs no per-row queries. fof/reactions keeps a request-scoped
+ * ReactionCountResolver. On 2.0.0 betas it primes it with every discussion's
+ * `first_post_id` before the index endpoint serialises; from 2.0.1 fields
+ * register their post and return a closure, and the first one resolved loads
+ * every registered post in one batch. Cascade uses whichever the installed
+ * version offers.
  *
  * Which is also why this does NOT include `firstPost` as a relationship:
  * serialising the post to reach its reaction fields would drag in rendered
@@ -51,20 +52,30 @@ class ReactionFields
             // twenty rows does not carry a hundred-odd empty entries.
             Schema\Arr::make('cascadeReactionCounts')
                 ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context))
-                ->get(function (Discussion $discussion): object {
+                ->get(function (Discussion $discussion, Context $context) {
                     if (! $discussion->first_post_id) {
                         return (object) [];
                     }
 
-                    $counts = array_filter(
-                        $this->resolver->countsFor((int) $discussion->first_post_id),
-                        fn ($count) => $count > 0
-                    );
+                    $postId = (int) $discussion->first_post_id;
 
                     // Cast so an empty map serialises as {} rather than [] -
                     // the frontend indexes it by reaction id either way, but a
                     // bare array would arrive as a JS array and read wrong.
-                    return (object) $counts;
+                    $shape = fn (array $counts): object => (object) array_filter($counts, fn ($count) => $count > 0);
+
+                    // fof/reactions >= 2.0.1: register the post and hand the
+                    // serializer a closure; the first one resolved loads every
+                    // registered post in one batch (it no longer primes the
+                    // resolver from the discussion list).
+                    if (method_exists($this->resolver, 'deferCounts')) {
+                        $deferred = $this->resolver->deferCounts($postId, $context->request);
+
+                        return fn () => $shape($deferred());
+                    }
+
+                    // 2.0.0 betas: already primed for every row's first post.
+                    return $shape($this->resolver->countsFor($postId));
                 }),
 
             Schema\Number::make('cascadeUserReaction')
@@ -74,7 +85,11 @@ class ReactionFields
                         return null;
                     }
 
-                    return $this->resolver->userReactionFor(
+                    // Deferred on >= 2.0.1 for the same one-batch load; the
+                    // betas take the same arguments and are already primed.
+                    $method = method_exists($this->resolver, 'deferUserReaction') ? 'deferUserReaction' : 'userReactionFor';
+
+                    return $this->resolver->{$method}(
                         (int) $discussion->first_post_id,
                         $context->getActor(),
                         $context->request
