@@ -252,6 +252,8 @@ jobs:
 
           CONTENT_MD=$(printf '## %s %s\n\n%s\n\n[View release on GitHub](%s)\n\n☕ If you like the things I have built, consider [buying me a coffee](https://buymeacoffee.com/ernestdefoe).\n' \
             "$REPO_NAME" "$RELEASE_TAG" "${POST_BODY:-_No release notes provided._}" "$RELEASE_URL")
+          # Private repo: its GitHub release page 404s for everyone else, so leave the link out.
+          if [ "${{ github.event.repository.private }}" = "true" ]; then CONTENT_MD=$(printf '%s\n' "$CONTENT_MD" | grep -v 'on GitHub](' || true); fi
 
           # 🚨 Render to HTML before posting. Release notes are Markdown, and the
           # support site has no Markdown extension — Scribe replaced it — so
@@ -355,17 +357,9 @@ jobs:
             # what it is given — the same reason the <code> rule below does it.
             # Highlighting still happens: Flarum loads hljs client-side.
             #
-            # Must run BEFORE the inline-<code> rule below, whose non-greedy
-            # match would otherwise pair an opening <code> inside a <pre> with
-            # a closing tag outside it.
-            #
-            # 🚨 NO APOSTROPHES anywhere in this perl block. The whole script is
-            # a bash single-quoted string, so one apostrophe in a comment ends
-            # it, and bash parses the rest of the perl as shell — the first <
-            # is then a syntax error and the step dies before it posts
-            # anything. That is not a theoretical hazard: it is what broke
-            # this workflow, in a comment containing the word rule followed by
-            # an apostrophe and an s.
+            # Must run BEFORE the inline-<code> rule, whose non-greedy
+            # match pairs an opening <code> inside a <pre> with a closing tag
+            # outside it.
             s{<pre[^>]*>(.*?)</pre>}{
               my $inner = $1;
               $inner =~ s{</?code[^>]*>}{}g;
@@ -508,6 +502,8 @@ jobs:
               }
             }')
           CONTENT=$(printf '## %s\n\n%s\n\n[Release on GitHub](%s)\n\n☕ If you like the things I have built, consider [buying me a coffee](https://buymeacoffee.com/ernestdefoe).\n' "$heading" "$notes" "$RELEASE_URL")
+          # Private repo: its GitHub release page 404s for everyone else, so leave the link out.
+          if [ "${{ github.event.repository.private }}" = "true" ]; then CONTENT=$(printf '%s\n' "$CONTENT" | grep -v 'on GitHub](' || true); fi
 
           # 🚨 A rerun of this job must not post the release twice. If one of
           # the thread's latest posts already opens with this release's
