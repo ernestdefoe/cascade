@@ -2,6 +2,8 @@ import app from 'flarum/forum/app';
 import { extend } from 'flarum/common/extend';
 import ItemList from 'flarum/common/utils/ItemList';
 import IndexPage from 'flarum/forum/components/IndexPage';
+import type PageStructure from 'flarum/forum/components/PageStructure';
+import type Mithril from 'mithril';
 
 import TrendingWidget from './components/TrendingWidget';
 import HashtagCloudWidget from './components/HashtagCloudWidget';
@@ -23,8 +25,8 @@ const FOF_SIDE_ITEM = 'endWidgetSection';
  * would push the feed off centre for nothing, and the feed centres perfectly
  * well without it.
  */
-export default function addRightRail() {
-  extend('flarum/forum/components/PageStructure', 'containerItems', function (items) {
+export default function addRightRail(): void {
+  extend<PageStructure, 'containerItems'>('flarum/forum/components/PageStructure', 'containerItems', function (items) {
     if (!app.current || !app.current.matches(IndexPage)) return;
 
     // fof/forum-widgets-core adds its side section to this very list, at
@@ -37,7 +39,7 @@ export default function addRightRail() {
     // This is the pattern those extensions invite - flarum/realtime documents
     // the same "take my named item and render it where you like" contract for
     // its typing indicator.
-    let sideWidgets = null;
+    let sideWidgets: Mithril.Children = null;
 
     if (items.has(FOF_SIDE_ITEM)) {
       sideWidgets = items.get(FOF_SIDE_ITEM);
@@ -63,10 +65,12 @@ export default function addRightRail() {
 /**
  * The rail's widgets, as an ItemList so another extension can contribute one.
  */
-export function widgetItems() {
-  const items = new ItemList();
+export function widgetItems(): ItemList<Mithril.Children> {
+  const items = new ItemList<Mithril.Children>();
 
-  if (setting('widget_trending')) {
+  // The trending list is a flarum/tags resource; without Tags the endpoint
+  // does not exist, so the widget would only ever ask for a 404.
+  if (setting('widget_trending') && hasExtension('flarum-tags')) {
     items.add('trending', <TrendingWidget />, 100);
   }
 

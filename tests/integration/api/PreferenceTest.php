@@ -49,7 +49,7 @@ class PreferenceTest extends TestCase
     public function the_settings_reach_the_forum_typed()
     {
         $this->setting('ernestdefoe-cascade.excerpt_length', '120');
-        $this->setting('ernestdefoe-cascade.widget_follow', '0');
+        $this->setting('ernestdefoe-cascade.widget_trending', '0');
 
         $response = $this->send($this->request('GET', '/api'));
         $attributes = json_decode((string) $response->getBody(), true)['data']['attributes'];
@@ -57,10 +57,15 @@ class PreferenceTest extends TestCase
         $this->assertSame('wall', $attributes['cascade.preset']);
         $this->assertSame('excerpt_media', $attributes['cascade.feed_density']);
         $this->assertSame(120, $attributes['cascade.excerpt_length']);
-        $this->assertSame(6, $attributes['cascade.rail_tag_count']);
-        $this->assertTrue($attributes['cascade.widget_trending']);
-        $this->assertFalse($attributes['cascade.widget_follow']);
+        $this->assertFalse($attributes['cascade.widget_trending']);
+        $this->assertSame('auto', $attributes['cascade.engagement_bar']);
         $this->assertTrue($attributes['cascade.allow_user_preset']);
+        $this->assertTrue($attributes['cascade.widget_hashtags']);
         $this->assertSame(24, $attributes['cascade.hashtag_count']);
+
+        // Settings nothing reads are not shipped on every page load.
+        foreach (['rail_tag_count', 'widget_presence', 'widget_follow', 'mobile_tabbar'] as $dead) {
+            $this->assertArrayNotHasKey("cascade.$dead", $attributes);
+        }
     }
 }

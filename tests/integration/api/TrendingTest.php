@@ -64,11 +64,17 @@ class TrendingTest extends TestCase
 
     private function trending(?int $actor = null): array
     {
-        $response = $this->send($this->request('GET', '/api/cascade/trending', $actor ? ['authenticatedAs' => $actor] : []));
+        $response = $this->send($this->request('GET', '/api/cascade-trending-tags', $actor ? ['authenticatedAs' => $actor] : []));
 
         $this->assertSame(200, $response->getStatusCode());
 
-        return json_decode((string) $response->getBody(), true)['data'];
+        $data = json_decode((string) $response->getBody(), true)['data'];
+
+        foreach ($data as $entry) {
+            $this->assertSame('cascade-trending-tags', $entry['type']);
+        }
+
+        return array_column($data, 'attributes');
     }
 
     /** The widget's cache lives in the test forum's storage, which outlives a test. */
@@ -104,6 +110,32 @@ class TrendingTest extends TestCase
         $this->boot();
 
         $this->assertSame(['general'], array_column($this->trending(), 'slug'));
+    }
+
+    #[Test]
+    public function a_members_own_hidden_discussion_counts_for_them_alone()
+    {
+        // Discussion visibility is per actor: the author still sees their own
+        // hidden discussion. That must not leak into anyone else's counts, so
+        // the author asks first and fills the cache.
+        $this->discussion(1, [1]);
+        $this->discussion(1, [2], ['hidden_at' => Carbon::now(), 'user_id' => 3]);
+        $this->seed();
+        $this->boot();
+
+        $this->assertSame(['general', 'help'], array_column($this->trending(3), 'slug'), 'The author');
+        $this->assertSame(['general'], array_column($this->trending(2), 'slug'), 'Another member');
+        $this->assertSame(['general'], array_column($this->trending(), 'slug'), 'A guest');
+    }
+
+    #[Test]
+    public function without_tags_the_endpoint_does_not_exist()
+    {
+        $this->extensions = ['ernestdefoe-cascade'];
+
+        $response = $this->send($this->request('GET', '/api/cascade-trending-tags'));
+
+        $this->assertSame(404, $response->getStatusCode());
     }
 
     #[Test]

@@ -5,12 +5,16 @@ import Icon from 'flarum/common/components/Icon';
 import Link from 'flarum/common/components/Link';
 import username from 'flarum/common/helpers/username';
 import humanTime from 'flarum/common/utils/humanTime';
+import type Discussion from 'flarum/common/models/Discussion';
+import type DiscussionListItem from 'flarum/forum/components/DiscussionListItem';
+import type Mithril from 'mithril';
 
 import CascadeReplies from './components/CascadeReplies';
 import MediaMosaic from './components/MediaMosaic';
 import ReactionControl from './components/ReactionControl';
 import { postPlainText } from './postContent';
 import { reactionById, reactionGlyph } from './reactions';
+import type Reaction from 'ext:fof/reactions/common/models/Reaction';
 import { replyState, seeMore, seeLess, openModal, version } from './repliesState';
 import { setting } from './settings';
 
@@ -27,11 +31,11 @@ import { setting } from './settings';
  * in column two. Which rows sit beside the avatar is the presets' business;
  * see less/presets/.
  */
-export default function decorateRow() {
+export default function decorateRow(): void {
   // String path rather than a prototype reference: core's `extend()` resolves
   // it through flarum.reg.onLoad, so this keeps working if DiscussionListItem
   // ever moves into an async chunk. It costs nothing today.
-  extend('flarum/forum/components/DiscussionListItem', 'contentItems', function (items) {
+  extend<DiscussionListItem, 'contentItems'>('flarum/forum/components/DiscussionListItem', 'contentItems', function (items) {
     const discussion = this.attrs.discussion;
     const density = setting('feed_density');
 
@@ -44,7 +48,7 @@ export default function decorateRow() {
       if (body) items.add('cascadeBody', body, 75);
     }
 
-    items.add('cascadeEngagement', engagementView(discussion), 60);
+    if (setting('engagement_bar') !== 'off') items.add('cascadeEngagement', engagementView(discussion), 60);
     items.add('cascadeReplies', <CascadeReplies discussion={discussion} />, 55);
   });
 
@@ -53,7 +57,7 @@ export default function decorateRow() {
   // `discussion.freshness`. Anything Cascade renders that can change without a
   // freshness bump has to be declared to that retainer, or the state updates
   // and the DOM never follows - which looks exactly like an unwired control.
-  extend('flarum/forum/components/DiscussionListItem', 'oninit', function () {
+  extend<DiscussionListItem, 'oninit'>('flarum/forum/components/DiscussionListItem', 'oninit', function () {
     this.subtree.check(
       () => this.attrs.discussion.cascadeExcerpt(),
       () => this.attrs.discussion.cascadeLastReply(),
@@ -64,7 +68,7 @@ export default function decorateRow() {
   });
 }
 
-function avatarView(discussion) {
+function avatarView(discussion: Discussion): Mithril.Children {
   const user = discussion.user();
 
   if (!user) {
@@ -78,7 +82,7 @@ function avatarView(discussion) {
   );
 }
 
-function authorView(discussion) {
+function authorView(discussion: Discussion): Mithril.Children {
   const user = discussion.user();
 
   return (
@@ -105,13 +109,13 @@ function authorView(discussion) {
  * Expanding grows what is already there; it does not exchange it for something
  * else. (The modal does show the real rendered post - there, that is the point.)
  */
-function bodyView(discussion, density) {
+function bodyView(discussion: Discussion, density: string): Mithril.Children {
   const state = replyState(discussion.id());
   const full = state.showFullPost && state.firstPost ? postPlainText(state.firstPost.contentHtml()) : null;
 
   const excerpt = discussion.cascadeExcerpt();
   const text = full || excerpt;
-  const images = (discussion.cascadeImages && discussion.cascadeImages()) || [];
+  const images = discussion.cascadeImages() || [];
   const hasMedia = density === 'excerpt_media' && images.length > 0;
 
   if (!text && !hasMedia) return null;
@@ -159,9 +163,9 @@ function bodyView(discussion, density) {
  * reactions of its own, and a reaction button with nothing behind it would be
  * worse than no button at all.
  */
-function engagementView(discussion) {
-  const canReact = Boolean(discussion.cascadeFirstPostId && discussion.cascadeFirstPostId());
-  const replies = Math.max(0, discussion.commentCount() - 1);
+function engagementView(discussion: Discussion): Mithril.Children {
+  const canReact = Boolean(discussion.cascadeFirstPostId());
+  const replies = Math.max(0, (discussion.commentCount() ?? 0) - 1);
 
   return (
     <div className="Cascade-engagement">
@@ -173,7 +177,12 @@ function engagementView(discussion) {
         {replies > 0 && <span className="Cascade-engagement-count">{replies}</span>}
       </button>
 
-      <button type="button" className="Cascade-engagement-action Button--ua-reset" data-cs-action="share" onclick={(e) => share(e, discussion)}>
+      <button
+        type="button"
+        className="Cascade-engagement-action Button--ua-reset"
+        data-cs-action="share"
+        onclick={(e: MouseEvent) => share(e, discussion)}
+      >
         <Icon name="fas fa-share-from-square" />
         <span className="Cascade-engagement-label">{app.translator.trans('ernestdefoe-cascade.forum.row.share_button')}</span>
       </button>
@@ -187,14 +196,14 @@ function engagementView(discussion) {
  * The stacked reaction emoji at the right end of the bar. Rendered only when
  * somebody has actually reacted, so a quiet discussion gets no empty space.
  */
-function reactionPips(discussion) {
-  const counts = discussion.cascadeReactionCounts && discussion.cascadeReactionCounts();
+function reactionPips(discussion: Discussion): Mithril.Children {
+  const counts = discussion.cascadeReactionCounts();
 
   if (!counts) return null;
 
   const entries = Object.keys(counts)
     .map((id) => ({ reaction: reactionById(id), count: counts[id] }))
-    .filter((e) => e.reaction && e.count > 0)
+    .filter((e): e is { reaction: Reaction; count: number } => e.reaction !== null && e.count > 0)
     .sort((a, b) => b.count - a.count);
 
   if (!entries.length) return null;
@@ -220,7 +229,7 @@ function reactionPips(discussion) {
  * HTTP is not - so a failure falls back to prompting with the URL rather than
  * silently doing nothing.
  */
-function share(e, discussion) {
+function share(e: MouseEvent, discussion: Discussion): void {
   e.preventDefault();
   e.stopPropagation();
 

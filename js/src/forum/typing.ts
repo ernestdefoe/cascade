@@ -1,4 +1,7 @@
 import app from 'flarum/forum/app';
+import type Discussion from 'flarum/common/models/Discussion';
+import type TypingIndicator from 'ext:flarum/realtime/forum/components/TypingIndicator';
+import type TypingState from 'ext:flarum/realtime/forum/states/TypingState';
 
 /**
  * Typing indicators for the conversation modal.
@@ -12,14 +15,27 @@ import app from 'flarum/forum/app';
  * it. This module supplies both.
  *
  * Everything here is optional. flarum/realtime is a suggestion, not a
- * requirement, and `flarum.reg.get` returns undefined (rather than throwing)
- * for a namespace whose extension is not enabled - so on a forum without it
+ * requirement, and `flarum.reg.checkModule` returns false (rather than
+ * throwing) for a module nobody registered - so on a forum without it
  * every function below reports "unavailable" and the modal simply renders no
  * indicator.
  */
 
-/** discussionId -> { state, refs, channels, preexisting, timer, previous } */
-const subscriptions = new Map();
+type Socket = NonNullable<typeof app.websocket>;
+type Channel = ReturnType<Socket['subscribe']>;
+
+/** One live typing subscription, shared by everything that acquired it. */
+interface Subscription {
+  state: TypingState;
+  refs: number;
+  channels: { name: string; channel: Channel; preexisting: boolean }[];
+  handler: (data: unknown) => void;
+  timer: ReturnType<typeof setInterval> | null;
+  previous: unknown;
+}
+
+/** discussionId -> its subscription */
+const subscriptions = new Map<string, Subscription>();
 
 /**
  * A module exported by flarum/realtime, or null when it is not installed.
@@ -27,18 +43,20 @@ const subscriptions = new Map();
  * `checkModule` is used rather than `get` because it answers without warning:
  * `get` logs "No module found" to the console for an enabled-but-missing
  * module, and an absent optional dependency is not a fault worth reporting.
+ * It only looks in the registry's maps, so it cannot throw.
  */
-function realtime(id) {
-  try {
-    return flarum.reg.checkModule('flarum-realtime', id) || null;
-  } catch (e) {
-    return null;
-  }
+function realtime<T>(id: string): T | null {
+  return flarum.reg.checkModule('flarum-realtime', id) || null;
+}
+
+/** realtime's TypingState class, or null. */
+function typingStateClass(): typeof TypingState | null {
+  return realtime<typeof TypingState>('forum/states/TypingState');
 }
 
 /** The presentational component, or null. */
-export function typingIndicator() {
-  return realtime('forum/components/TypingIndicator');
+export function typingIndicator(): typeof TypingIndicator | null {
+  return realtime<typeof TypingIndicator>('forum/components/TypingIndicator');
 }
 
 /**
@@ -49,9 +67,9 @@ export function typingIndicator() {
  * exist, public connections must not be disallowed for a guest, and the
  * discussion's own `canViewWhoTypes` has to be set.
  */
-export function canShowTyping(discussion) {
+export function canShowTyping(discussion: Discussion | null | undefined): boolean {
   if (!discussion || !app.websocket) return false;
-  if (!typingIndicator() || !realtime('forum/states/TypingState')) return false;
+  if (!typingIndicator() || !typingStateClass()) return false;
   if (app.forum.attribute('websocket.disallow_connection') && !app.session.user) return false;
 
   return Boolean(discussion.attribute('canViewWhoTypes'));
@@ -65,8 +83,13 @@ export function canShowTyping(discussion) {
  *
  * @returns the TypingState, or null when typing is unavailable
  */
-export function acquireTyping(discussion) {
-  if (!canShowTyping(discussion)) return null;
+export function acquireTyping(discussion: Discussion): TypingState | null {
+  const socket = app.websocket;
+  const StateClass = typingStateClass();
+
+  // canShowTyping() checks both of these too; naming them here is what lets
+  // the rest of this function use them.
+  if (!canShowTyping(discussion) || !socket || !StateClass) return null;
 
   const id = String(discussion.id());
   const existing = subscriptions.get(id);
@@ -76,8 +99,7 @@ export function acquireTyping(discussion) {
     return existing.state;
   }
 
-  const TypingState = realtime('forum/states/TypingState');
-  const state = new TypingState();
+  const state = new StateClass();
 
   const names = ['private-typing=' + id];
 
@@ -88,22 +110,22 @@ export function acquireTyping(discussion) {
     names.push('private-typingIdentified=' + id);
   }
 
-  const handler = (data) => state.add(data);
+  const handler = (data: unknown) => state.add(data);
 
   const channels = names.map((name) => {
     // Pusher returns the SAME channel object if something else already
     // subscribed to this name - the discussion page's PostStream, say. Noting
     // that means release() can unbind our handler without unsubscribing a
     // channel we did not open.
-    const preexisting = Boolean(app.websocket.channel(name));
-    const channel = app.websocket.subscribe(name);
+    const preexisting = Boolean(socket.channel(name));
+    const channel = socket.subscribe(name);
 
     channel.bind('client-typing', handler);
 
     return { name, channel, preexisting };
   });
 
-  const entry = { state, refs: 1, channels, handler, timer: null, previous: null };
+  const entry: Subscription = { state, refs: 1, channels, handler, timer: null, previous: null };
 
   subscriptions.set(id, entry);
   startSending(discussion, entry);
@@ -114,7 +136,7 @@ export function acquireTyping(discussion) {
 /**
  * Drop one reference. The subscription is torn down when the last one goes.
  */
-export function releaseTyping(discussion) {
+export function releaseTyping(discussion: Discussion): void {
   const id = String(discussion.id());
   const entry = subscriptions.get(id);
 
@@ -131,7 +153,7 @@ export function releaseTyping(discussion) {
 
     // Only close what we opened. Unsubscribing a channel the discussion page
     // is also using would silently stop ITS typing indicator.
-    if (!preexisting) app.websocket.unsubscribe(name);
+    if (!preexisting) app.websocket?.unsubscribe(name);
   });
 
   entry.state.dispose();
@@ -150,7 +172,7 @@ export function releaseTyping(discussion) {
  * Nothing identifying is sent. The server resolves who we are from the
  * connection's authenticated user channel and decides who may learn it.
  */
-function startSending(discussion, entry) {
+function startSending(discussion: Discussion, entry: Subscription): void {
   if (!app.session.user) return;
 
   const channel = entry.channels[0].channel;
@@ -176,7 +198,7 @@ function startSending(discussion, entry) {
  * bottom of the window, underneath the modal backdrop - so without this the
  * subscription would be released at the exact moment the user starts typing.
  */
-export function holdForComposer(discussion) {
+export function holdForComposer(discussion: Discussion): void {
   if (!acquireTyping(discussion)) return;
 
   let sawComposer = false;

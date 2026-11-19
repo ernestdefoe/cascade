@@ -1,5 +1,7 @@
 import app from 'flarum/forum/app';
-import Component from 'flarum/common/Component';
+import Component, { type ComponentAttrs } from 'flarum/common/Component';
+import type Discussion from 'flarum/common/models/Discussion';
+import type Mithril from 'mithril';
 
 import { openModal } from '../repliesState';
 
@@ -19,8 +21,13 @@ import { openModal } from '../repliesState';
  * except one, because a mosaic of mixed aspect ratios does not tile - that is
  * the whole reason a single image is the special case.
  */
-export default class MediaMosaic extends Component {
-  view(vnode) {
+export interface IMediaMosaicAttrs extends ComponentAttrs {
+  discussion: Discussion;
+  interactive?: boolean;
+}
+
+export default class MediaMosaic extends Component<IMediaMosaicAttrs> {
+  view(vnode: Mithril.Vnode<IMediaMosaicAttrs, this>) {
     const discussion = vnode.attrs.discussion;
     const images = discussion.cascadeImages() || [];
 
@@ -42,7 +49,7 @@ export default class MediaMosaic extends Component {
         aria-label={interactive ? app.translator.trans('ernestdefoe-cascade.forum.row.open_post') : undefined}
         onkeydown={
           interactive
-            ? (e) => {
+            ? (e: KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   openModal(discussion);

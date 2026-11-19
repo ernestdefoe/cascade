@@ -1,6 +1,9 @@
 import app from 'flarum/forum/app';
-import Component from 'flarum/common/Component';
+import Component, { type ComponentAttrs } from 'flarum/common/Component';
 import Icon from 'flarum/common/components/Icon';
+import type Discussion from 'flarum/common/models/Discussion';
+import type Reaction from 'ext:fof/reactions/common/models/Reaction';
+import type Mithril from 'mithril';
 
 import { bump } from '../repliesState';
 import { reactionTypes, reactionById, reactionGlyph, reactionLabel, sendReaction } from '../reactions';
@@ -25,21 +28,23 @@ import { reactionTypes, reactionById, reactionGlyph, reactionLabel, sendReaction
  * `bump()`: DiscussionListItem freezes its subtree behind a SubtreeRetainer,
  * so a plain m.redraw() here would change nothing on screen.
  */
-export default class ReactionControl extends Component {
-  oninit(vnode) {
-    super.oninit(vnode);
+export interface IReactionControlAttrs extends ComponentAttrs {
+  discussion: Discussion;
+}
 
-    this.open = false;
-    this.openTimer = null;
-    this.closeTimer = null;
-    this.pressTimer = null;
-  }
+type Timer = ReturnType<typeof setTimeout> | undefined;
+
+export default class ReactionControl extends Component<IReactionControlAttrs> {
+  open = false;
+  openTimer: Timer = undefined;
+  closeTimer: Timer = undefined;
+  pressTimer: Timer = undefined;
 
   onremove() {
     this.clearTimers();
   }
 
-  view(vnode) {
+  view(vnode: Mithril.Vnode<IReactionControlAttrs, this>) {
     const discussion = vnode.attrs.discussion;
     const current = reactionById(discussion.cascadeUserReaction());
     const types = reactionTypes();
@@ -81,7 +86,7 @@ export default class ReactionControl extends Component {
     );
   }
 
-  picker(discussion, types, current) {
+  picker(discussion: Discussion, types: Reaction[], current: Reaction | null) {
     return (
       <div className="Cascade-reactPicker" role="menu">
         {types.map((reaction, i) => (
@@ -114,12 +119,12 @@ export default class ReactionControl extends Component {
    * already applied. This is the path most clicks take, so it never opens the
    * picker.
    */
-  toggleDefault(discussion, current, types) {
+  toggleDefault(discussion: Discussion, current: Reaction | null, types: Reaction[]) {
     this.closeNow();
     this.apply(discussion, current ? null : types[0], current);
   }
 
-  choose(discussion, reaction, current) {
+  choose(discussion: Discussion, reaction: Reaction, current: Reaction | null) {
     this.closeNow();
 
     // Picking the reaction you already have removes it, the way it does on
@@ -135,7 +140,7 @@ export default class ReactionControl extends Component {
    * exactly what was there before rather than leaving the UI claiming
    * something that did not happen.
    */
-  apply(discussion, reaction, current) {
+  apply(discussion: Discussion, reaction: Reaction | null, current: Reaction | null) {
     if (!app.session.user) {
       app.modal.show(() => import('flarum/forum/components/LogInModal'));
       return;
@@ -146,16 +151,20 @@ export default class ReactionControl extends Component {
     if (!postId) return;
 
     const previousId = discussion.cascadeUserReaction();
-    const previousCounts = { ...(discussion.cascadeReactionCounts() || {}) };
+    const previousCounts: Record<string, number> = { ...(discussion.cascadeReactionCounts() || {}) };
     const counts = { ...previousCounts };
 
     if (current) {
-      counts[current.id()] = Math.max(0, (counts[current.id()] || 1) - 1);
-      if (!counts[current.id()]) delete counts[current.id()];
+      const id = String(current.id());
+
+      counts[id] = Math.max(0, (counts[id] || 1) - 1);
+      if (!counts[id]) delete counts[id];
     }
 
     if (reaction) {
-      counts[reaction.id()] = (counts[reaction.id()] || 0) + 1;
+      const id = String(reaction.id());
+
+      counts[id] = (counts[id] || 0) + 1;
     }
 
     discussion.pushAttributes({
@@ -164,7 +173,7 @@ export default class ReactionControl extends Component {
     });
     bump();
 
-    sendReaction(postId, reaction ? reaction.id() : null).catch(() => {
+    sendReaction(postId, reaction ? (reaction.id() ?? null) : null).catch(() => {
       discussion.pushAttributes({
         cascadeUserReaction: previousId,
         cascadeReactionCounts: previousCounts,

@@ -1,4 +1,6 @@
 import app from 'flarum/forum/app';
+import type Discussion from 'flarum/common/models/Discussion';
+import type Post from 'flarum/common/models/Post';
 
 /**
  * Per-discussion state for the feed cards.
@@ -13,7 +15,15 @@ import app from 'flarum/forum/app';
  * value, so Cascade gives it something to watch: `version`, bumped on every
  * state change. decorateRow registers `() => version()` as a retainer check.
  */
-const states = new Map();
+export interface ReplyState {
+  showFullPost: boolean;
+  loading: boolean;
+  loaded: boolean;
+  posts: Post[];
+  firstPost: Post | null;
+}
+
+const states = new Map<string | undefined, ReplyState>();
 let v = 0;
 
 /**
@@ -22,25 +32,26 @@ let v = 0;
  * `showFullPost` and the loaded posts are deliberately separate. "See more"
  * expands the opening post in place; the reply link opens the modal. Both need
  * the same request, neither should trigger the other's UI.
- *
- * @param {string} id
  */
-export function replyState(id) {
-  if (!states.has(id)) {
-    states.set(id, { showFullPost: false, loading: false, loaded: false, posts: [], firstPost: null });
+export function replyState(id: string | undefined): ReplyState {
+  let state = states.get(id);
+
+  if (!state) {
+    state = { showFullPost: false, loading: false, loaded: false, posts: [], firstPost: null };
+    states.set(id, state);
   }
 
-  return states.get(id);
+  return state;
 }
 
 /** Tell every row's SubtreeRetainer that something changed. */
-export function bump() {
+export function bump(): void {
   v++;
   m.redraw();
 }
 
 /** The value the retainer watches. */
-export function version() {
+export function version(): number {
   return v;
 }
 
@@ -52,9 +63,10 @@ export function version() {
  * also carries the full text of the post the card was showing a truncated
  * excerpt of.
  *
- * @returns {Promise} resolves once the state is populated
+ * Always resolves, with the state. A failure shows its own alert and leaves
+ * `state.loaded` false, so callers check that rather than catching.
  */
-export function load(discussion) {
+export function load(discussion: Discussion): Promise<ReplyState> {
   const state = replyState(discussion.id());
 
   // Fetched once per discussion per page view. Re-opening reuses what is
@@ -68,7 +80,7 @@ export function load(discussion) {
   bump();
 
   return app.store
-    .find('posts', {
+    .find<Post[]>('posts', {
       filter: { discussion: discussion.id() },
       page: { limit: 50 },
       sort: 'number',
@@ -86,25 +98,31 @@ export function load(discussion) {
 
       return state;
     })
-    .catch((e) => {
+    .catch(() => {
       state.loading = false;
       bump();
       app.alerts.show({ type: 'error' }, app.translator.trans('ernestdefoe-cascade.forum.row.replies_failed'));
 
-      throw e;
+      return state;
     });
 }
 
 /**
  * "See more": show the whole opening post in the card, in place.
  */
-export function seeMore(discussion) {
+export function seeMore(discussion: Discussion): Promise<ReplyState> {
   replyState(discussion.id()).showFullPost = true;
   bump();
 
-  return load(discussion).catch(() => {
-    replyState(discussion.id()).showFullPost = false;
-    bump();
+  // On a failure load() has already shown the alert; this only collapses the
+  // card again.
+  return load(discussion).then((state) => {
+    if (!state.loaded && !state.loading) {
+      state.showFullPost = false;
+      bump();
+    }
+
+    return state;
   });
 }
 
@@ -112,7 +130,7 @@ export function seeMore(discussion) {
  * "See less": collapse the post's text back to its excerpt. The loaded posts
  * stay in hand, so re-expanding is instant.
  */
-export function seeLess(discussion) {
+export function seeLess(discussion: Discussion): void {
   replyState(discussion.id()).showFullPost = false;
   bump();
 }
@@ -124,8 +142,10 @@ export function seeLess(discussion) {
  * the timeline you were reading. The loader starts first so the modal opens
  * with data already arriving rather than after it.
  */
-export function openModal(discussion) {
-  load(discussion).catch(() => {});
+export function openModal(discussion: Discussion): void {
+  // The modal shows the excerpt until the post arrives, and load() reports a
+  // failure itself, so the promise is not waited on.
+  void load(discussion);
 
   app.modal.show(() => import('./components/DiscussionModal'), { discussion });
 }

@@ -2,6 +2,8 @@ import app from 'flarum/forum/app';
 import { extend } from 'flarum/common/extend';
 import FieldSet from 'flarum/common/components/FieldSet';
 import Select from 'flarum/common/components/Select';
+import type SettingsPage from 'flarum/forum/components/SettingsPage';
+import type User from 'flarum/common/models/User';
 import { setting } from './settings';
 
 /**
@@ -12,7 +14,7 @@ import { setting } from './settings';
  * default on save — the picker appears to work and then snaps back, with
  * nothing logged. Adding a preset means touching both.
  */
-const PRESETS = ['wall', 'timeline', 'stream'];
+const PRESETS: string[] = ['wall', 'timeline', 'stream'];
 
 /**
  * Let a member pick which preset they read the forum in.
@@ -23,7 +25,7 @@ const PRESETS = ['wall', 'timeline', 'stream'];
  * touched this — or who deliberately goes back to it — tracks the admin's
  * choice rather than being pinned to whatever it happened to be that day.
  */
-export default function addPresetPicker() {
+export default function addPresetPicker(): void {
   /*
    * 🚨 The first argument is a module PATH, not an imported component.
    *
@@ -32,19 +34,20 @@ export default function addPresetPicker() {
    * registry lookup that runs at boot, which returns undefined, and
    * `extend(undefined.prototype, ...)` throws inside the initializer — taking
    * the whole forum down on every page, not just the settings page. Passing the
-   * path defers the lookup until the chunk is actually loaded.
+   * path defers the lookup until the chunk is actually loaded. (The
+   * `import type` above is erased at build time, so it costs no lookup.)
    */
-  extend('flarum/forum/components/SettingsPage', 'settingsItems', function (items) {
+  extend<SettingsPage, 'settingsItems'>('flarum/forum/components/SettingsPage', 'settingsItems', function (items) {
     if (!setting('allow_user_preset')) return;
 
     const user = this.user;
 
     if (!user) return;
 
-    const options = { '': app.translator.trans('ernestdefoe-cascade.forum.preset.follow_forum') };
+    const options: Record<string, string> = { '': app.translator.trans('ernestdefoe-cascade.forum.preset.follow_forum', {}, true) };
 
     PRESETS.forEach((key) => {
-      options[key] = app.translator.trans(`ernestdefoe-cascade.lib.preset.${key}`);
+      options[key] = app.translator.trans(`ernestdefoe-cascade.lib.preset.${key}`, {}, true);
     });
 
     items.add(
@@ -52,7 +55,7 @@ export default function addPresetPicker() {
       // Same shape core gives its own sections, so this reads as one of them
       // rather than as something bolted on underneath.
       <FieldSet className="Settings-cascadePreset FieldSet--min" label={app.translator.trans('ernestdefoe-cascade.forum.preset.heading')}>
-        <Select value={user.preferences()?.cascadePreset ?? ''} options={options} onchange={(value) => apply(user, value)} />
+        <Select value={user.preferences()?.cascadePreset ?? ''} options={options} onchange={(value: string) => apply(user, value)} />
         <span className="helpText">{app.translator.trans('ernestdefoe-cascade.forum.preset.help')}</span>
       </FieldSet>,
       // Core spaces its sections ten apart from 100 (account) down to 60
@@ -72,20 +75,20 @@ export default function addPresetPicker() {
  * preview stays honest if the save then fails: they see what they picked, and
  * the alert tells them it did not stick.
  */
-function apply(user, value) {
+function apply(user: User, value: string): void {
   const previous = document.documentElement.getAttribute('data-cascade-preset');
 
   document.documentElement.setAttribute('data-cascade-preset', value === '' ? forumDefault() : value);
 
   user.savePreferences({ cascadePreset: value }).catch(() => {
-    document.documentElement.setAttribute('data-cascade-preset', previous);
+    if (previous !== null) document.documentElement.setAttribute('data-cascade-preset', previous);
 
     app.alerts.show({ type: 'error' }, app.translator.trans('ernestdefoe-cascade.forum.preset.save_failed'));
   });
 }
 
 /** The forum-wide preset, for when a member chooses to follow it. */
-function forumDefault() {
+function forumDefault(): string {
   const value = setting('preset');
 
   return PRESETS.includes(value) ? value : 'wall';

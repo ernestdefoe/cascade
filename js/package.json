@@ -6,12 +6,15 @@
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production",
     "format": "prettier --write src",
-    "format-check": "prettier --check src"
+    "format-check": "prettier --check src",
+    "check-typings": "tsc --noEmit --project tsconfig.json"
   },
   "devDependencies": {
     "@flarum/prettier-config": "^1.0.0",
+    "flarum-tsconfig": "^2.0.0",
     "flarum-webpack-config": "^3.1.0",
     "prettier": "^3.9.10",
+    "typescript": "^5.9.3",
     "webpack": "^5.0.0",
     "webpack-cli": "^7.2.3"
   },

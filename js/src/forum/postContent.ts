@@ -13,7 +13,7 @@
  */
 const UPLOAD_MARKER = /\[upl-(?:image-preview|file)[^\]]*\]/g;
 
-export default function postContent(html) {
+export default function postContent(html: string | null | undefined): string {
   if (!html) return '';
 
   return html.replace(UPLOAD_MARKER, '');
@@ -27,7 +27,7 @@ export default function postContent(html) {
  * the expanded text opens with `[upl-image-preview uuid=...]` and a pair of
  * URLs, which is what the reader was never meant to see.
  */
-export function postPlainText(html) {
+export function postPlainText(html: string | null | undefined): string {
   const cleaned = postContent(html);
 
   if (!cleaned) return '';

@@ -1,5 +1,5 @@
 import app from 'flarum/forum/app';
-import Modal from 'flarum/common/components/Modal';
+import Modal, { type IInternalModalAttrs } from 'flarum/common/components/Modal';
 import Avatar from 'flarum/common/components/Avatar';
 import Button from 'flarum/common/components/Button';
 import Icon from 'flarum/common/components/Icon';
@@ -8,10 +8,13 @@ import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import username from 'flarum/common/helpers/username';
 import humanTime from 'flarum/common/utils/humanTime';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
+import type Discussion from 'flarum/common/models/Discussion';
+import type TypingState from 'ext:flarum/realtime/forum/states/TypingState';
+import type Mithril from 'mithril';
 
 import MediaMosaic from './MediaMosaic';
 import postContent from '../postContent';
-import { replyState, load } from '../repliesState';
+import { replyState, load, type ReplyState } from '../repliesState';
 import { acquireTyping, holdForComposer, releaseTyping, typingIndicator } from '../typing';
 
 /**
@@ -28,20 +31,29 @@ import { acquireTyping, holdForComposer, releaseTyping, typingIndicator } from '
  * Data comes from the same `replyState` entry the card uses, so opening the
  * modal on a card whose text was already expanded costs no request at all.
  */
-export default class DiscussionModal extends Modal {
-  oninit(vnode) {
+export interface IDiscussionModalAttrs extends IInternalModalAttrs {
+  discussion: Discussion;
+}
+
+export default class DiscussionModal extends Modal<IDiscussionModalAttrs> {
+  discussion!: Discussion;
+  typing: TypingState | null = null;
+
+  oninit(vnode: Mithril.Vnode<IDiscussionModalAttrs, this>) {
     super.oninit(vnode);
 
     this.discussion = this.attrs.discussion;
 
-    load(this.discussion).catch(() => {});
+    // load() reports a failure itself; the modal falls back to the excerpt it
+    // always has in hand.
+    void load(this.discussion);
 
     // Null unless flarum/realtime is installed and this viewer is allowed to
     // see who is typing here.
     this.typing = acquireTyping(this.discussion);
   }
 
-  onremove(vnode) {
+  onremove(vnode: Mithril.VnodeDOM<IDiscussionModalAttrs, this>) {
     super.onremove(vnode);
 
     if (this.typing) releaseTyping(this.discussion);
@@ -79,7 +91,7 @@ export default class DiscussionModal extends Modal {
     );
   }
 
-  openingPost(state) {
+  openingPost(state: ReplyState) {
     const discussion = this.discussion;
     const user = discussion.user();
 
@@ -107,12 +119,12 @@ export default class DiscussionModal extends Modal {
 
         {/* Images after the words, the way a social post reads: the text is
             the caption, the pictures are what it is captioning. */}
-        {discussion.cascadeImages && (discussion.cascadeImages() || []).length > 0 && <MediaMosaic discussion={discussion} interactive={false} />}
+        {(discussion.cascadeImages() || []).length > 0 && <MediaMosaic discussion={discussion} interactive={false} />}
       </article>
     );
   }
 
-  replies(state) {
+  replies(state: ReplyState) {
     if (state.loading) {
       return <LoadingIndicator display="block" />;
     }
@@ -212,6 +224,9 @@ export default class DiscussionModal extends Modal {
 
     this.hide();
 
+    // It rejects, with no error, only after showing the login modal or when
+    // the actor cannot reply - both already answered on screen. Core's own
+    // Reply button ignores it the same way.
     DiscussionControls.replyAction.call(discussion, true, false).catch(() => {});
   }
 }

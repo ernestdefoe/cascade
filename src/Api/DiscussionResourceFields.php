@@ -14,15 +14,15 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use s9e\TextFormatter\Utils;
 
 /**
- * Two computed fields that turn a discussion list row into a feed card.
+ * The computed fields that turn a discussion list row into a feed card.
  *
- * Both read the first post's *stored* formatter XML — the intermediate
+ * All of them read a post's *stored* formatter XML — the intermediate
  * representation s9e/text-formatter writes at post time. `parsed_content`
  * hands that back verbatim, unlike `content` (which runs an unparse back to
- * markdown) or `formatContent()` (which runs a full render). Neither field
+ * markdown) or `formatContent()` (which runs a full render). No field
  * touches the formatter at all.
  *
- * Both are listing-only. On a single discussion the frontend already has the
+ * All are listing-only. On a single discussion the frontend already has the
  * real first post, so computing an excerpt there would be waste.
  */
 class DiscussionResourceFields
@@ -40,88 +40,95 @@ class DiscussionResourceFields
      */
     public const MAX_TILES = 5;
 
+    public function __construct(
+        protected SettingsRepositoryInterface $settings
+    ) {
+    }
+
     public function __invoke(): array
     {
-        // Resolved here rather than injected into the constructor: the
-        // container invokes this class with no arguments, so a typed
-        // constructor parameter would throw ArgumentCountError at boot.
-        $settings = resolve(SettingsRepositoryInterface::class);
-
-        $length = (int) $settings->get('ernestdefoe-cascade.excerpt_length', 280);
-        $length = max(40, min(self::MAX_EXCERPT, $length));
-
-        $density = (string) $settings->get('ernestdefoe-cascade.feed_density', 'excerpt_media');
+        $length = max(40, min(self::MAX_EXCERPT, (int) $this->settings->get('ernestdefoe-cascade.excerpt_length')));
+        $density = (string) $this->settings->get('ernestdefoe-cascade.feed_density');
 
         return [
-            Schema\Str::make('cascadeExcerpt')
-                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density !== 'title')
-                ->get(function (Discussion $discussion) use ($length): ?string {
-                    $xml = $this->firstPostXml($discussion);
-
-                    if ($xml === null) {
-                        return null;
-                    }
-
-                    $text = Utils::removeFormatting($this->stripAttachments($xml));
-
-                    // Collapse the whitespace a multi-paragraph post carries so
-                    // the row shows prose rather than a column of blank lines.
-                    $text = trim(preg_replace('/\s+/u', ' ', $text) ?? '');
-
-                    if ($text === '') {
-                        return null;
-                    }
-
-                    return $this->truncate($text, $length);
-                }),
-
-            // Up to five images, which is what a social mosaic shows before it
-            // collapses the rest into a "+N" on the last tile. Capped here
-            // rather than client-side so the payload never carries URLs nobody
-            // will render.
-            Schema\Arr::make('cascadeImages')
-                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density === 'excerpt_media')
-                ->get(function (Discussion $discussion): array {
-                    $xml = $this->firstPostXml($discussion);
-
-                    return $xml === null ? [] : array_slice($this->imageUrls($xml), 0, self::MAX_TILES);
-                }),
-
-            // The most recent reply, previewed under the row the way a social
-            // feed shows its latest comment. Author, avatar and timestamp all
-            // come from `lastPostedUser`, which core ALREADY default-includes
-            // on this endpoint - so the only thing missing was the text, and
-            // that is what this adds.
-            Schema\Str::make('cascadeLastReply')
-                ->visible(fn (Discussion $discussion, Context $context) => $context->listing() && $discussion->relationLoaded('lastPost'))
-                ->get(function (Discussion $discussion): ?string {
-                    $xml = $this->lastReplyXml($discussion);
-
-                    if ($xml === null) {
-                        return null;
-                    }
-
-                    $text = trim(preg_replace(
-                        '/\s+/u',
-                        ' ',
-                        Utils::removeFormatting($this->stripAttachments($xml))
-                    ) ?? '');
-
-                    return $text === '' ? null : $this->truncate($text, 180);
-                }),
-
-            Schema\Integer::make('cascadeImageCount')
-                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density === 'excerpt_media')
-                ->get(function (Discussion $discussion): int {
-                    $xml = $this->firstPostXml($discussion);
-
-                    if ($xml === null) {
-                        return 0;
-                    }
-
-                    return count($this->imageUrls($xml));
-                }),
+            $this->excerptField($length, $density),
+            $this->imagesField($density),
+            $this->lastReplyField(),
+            $this->imageCountField($density),
         ];
+    }
+
+    protected function excerptField(int $length, string $density): Schema\Str
+    {
+        return Schema\Str::make('cascadeExcerpt')
+            ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density !== 'title')
+            ->get(function (Discussion $discussion) use ($length): ?string {
+                $text = $this->plainText($this->firstPostXml($discussion));
+
+                return $text === null ? null : $this->truncate($text, $length);
+            });
+    }
+
+    /**
+     * Up to five images, which is what a social mosaic shows before it
+     * collapses the rest into a "+N" on the last tile. Capped here rather than
+     * client-side so the payload never carries URLs nobody will render.
+     */
+    protected function imagesField(string $density): Schema\Arr
+    {
+        return Schema\Arr::make('cascadeImages')
+            ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density === 'excerpt_media')
+            ->get(function (Discussion $discussion): array {
+                $xml = $this->firstPostXml($discussion);
+
+                return $xml === null ? [] : array_slice($this->imageUrls($xml), 0, self::MAX_TILES);
+            });
+    }
+
+    /**
+     * The most recent reply, previewed under the row the way a social feed
+     * shows its latest comment. Author, avatar and timestamp all come from
+     * `lastPostedUser`, which core ALREADY default-includes on this endpoint,
+     * so the only thing missing was the text, and that is what this adds.
+     */
+    protected function lastReplyField(): Schema\Str
+    {
+        return Schema\Str::make('cascadeLastReply')
+            ->visible(fn (Discussion $discussion, Context $context) => $context->listing() && $discussion->relationLoaded('lastPost'))
+            ->get(function (Discussion $discussion): ?string {
+                $text = $this->plainText($this->lastReplyXml($discussion));
+
+                return $text === null ? null : $this->truncate($text, 180);
+            });
+    }
+
+    protected function imageCountField(string $density): Schema\Integer
+    {
+        return Schema\Integer::make('cascadeImageCount')
+            ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context) && $density === 'excerpt_media')
+            ->get(function (Discussion $discussion): int {
+                $xml = $this->firstPostXml($discussion);
+
+                return $xml === null ? 0 : count($this->imageUrls($xml));
+            });
+    }
+
+    /**
+     * A post's stored XML as one line of prose, or null when nothing is left.
+     *
+     * Attachment markers are dropped first (see stripAttachments), then the
+     * whitespace a multi-paragraph post carries is collapsed so the row shows
+     * prose rather than a column of blank lines.
+     */
+    protected function plainText(?string $xml): ?string
+    {
+        if ($xml === null) {
+            return null;
+        }
+
+        $text = trim(preg_replace('/\s+/u', ' ', Utils::removeFormatting($this->stripAttachments($xml))) ?? '');
+
+        return $text === '' ? null : $text;
     }
 
     /**
@@ -292,7 +299,7 @@ class DiscussionResourceFields
      * fof/upload attachment that is the literal placeholder
      * `[upl-image-preview uuid=... url=... thumbnail_url=...]`. Left in, every
      * excerpt of a post with a screenshot opens with a wall of UUIDs and URLs
-     * instead of a sentence. The image is rendered separately by cascadeImage,
+     * instead of a sentence. The image is rendered separately by cascadeImages,
      * so nothing is lost by dropping the marker here.
      */
     protected function stripAttachments(string $xml): string

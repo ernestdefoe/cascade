@@ -49,9 +49,11 @@ export default class ComposerTrigger extends Component {
  * component itself.
  *
  * The method touches only `app`, never `this`, so calling it off the prototype
- * without an instance is safe. (Checked against rc.8; if core ever gives it
+ * without an instance is safe. (Checked against 2.x; if core ever gives it
  * state, this needs a real instance instead.)
  */
-function start() {
+function start(): Promise<unknown> {
+  // It rejects, with no error, only for a guest - after opening the login
+  // modal, which is the whole answer. Core's own button ignores it the same way.
   return IndexSidebar.prototype.newDiscussionAction.call(null).catch(() => {});
 }

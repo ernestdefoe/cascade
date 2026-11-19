@@ -130,7 +130,7 @@ it; with any of them absent, the matching piece of UI is simply not rendered.
 | [`flarum/realtime`](https://github.com/flarum/realtime) | The typing indicator in the conversation modal |
 | [`fof/upload`](https://github.com/FriendsOfFlarum/upload) | Attachments become the card's image mosaic |
 | [`fof/forum-widgets-core`](https://github.com/FriendsOfFlarum/forum-widgets-core) | Side widgets are adopted into Cascade's right rail rather than becoming a fourth column |
-| [`ernestdefoe/mobile-tab`](https://github.com/ernestdefoe/mobile-tab) | Bottom tab bar on phones |
+| [`ernestdefoe/hashtags`](https://packagist.org/packages/ernestdefoe/hashtags) | The hashtag cloud widget in the right rail |
 
 ---
 
@@ -146,7 +146,8 @@ Eight, in the extension's own admin page:
 - **What each row shows** — excerpt and image / excerpt only / title only
 - **Excerpt length** — 40 to 600 characters
 - **Trending widget** — tags ranked by discussions actually started recently,
-  recomputed hourly (never read from `tags.discussion_count`, which drifts)
+  recomputed hourly (never read from `tags.discussion_count`, which drifts).
+  Counts only discussions the viewer can see. Needs `flarum/tags`.
 - **Hashtag cloud widget** — a weighted cloud of the most-used hashtags, sized
   by rank rather than raw count so it stays readable however lopsided the
   numbers are. Appears only when

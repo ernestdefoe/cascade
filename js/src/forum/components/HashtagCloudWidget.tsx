@@ -1,7 +1,8 @@
 import app from 'flarum/forum/app';
-import Component from 'flarum/common/Component';
+import Component, { type ComponentAttrs } from 'flarum/common/Component';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import Link from 'flarum/common/components/Link';
+import type Mithril from 'mithril';
 import { setting } from '../settings';
 import railRequest from '../railCache';
 
@@ -15,14 +16,25 @@ import railRequest from '../railCache';
  *
  * The widget only renders when that extension is enabled; see widgetItems().
  */
+/** One row of ernestdefoe/hashtags' `/api/hashtags` response, as far as Cascade reads it. */
+interface HashtagRow {
+  attributes?: { name?: string; postCount?: number };
+}
+
+interface RankedHashtag {
+  name: string;
+  posts: number;
+  weight: number;
+}
+
 export default class HashtagCloudWidget extends Component {
-  oninit(vnode) {
+  loading = true;
+  tags: RankedHashtag[] = [];
+
+  oninit(vnode: Mithril.Vnode<ComponentAttrs, this>) {
     super.oninit(vnode);
 
-    this.loading = true;
-    this.tags = [];
-
-    railRequest(
+    railRequest<{ data?: HashtagRow[] } | null>(
       `${app.forum.attribute('apiUrl')}/hashtags`,
       // Asked for by popularity, but sorted again below: the endpoint's sort
       // parameters are that extension's business and could be renamed, while
@@ -38,6 +50,7 @@ export default class HashtagCloudWidget extends Component {
       .catch(() => {
         // A failed widget must not take the page with it. The rail renders
         // nothing, which is what a forum with no hashtags yet sees anyway.
+        // app.request has already shown its own alert for the HTTP error.
         this.tags = [];
         this.loading = false;
         m.redraw();
@@ -58,8 +71,8 @@ export default class HashtagCloudWidget extends Component {
 }
 
 /** How many hashtags the admin wants in the cloud. */
-function count() {
-  const configured = parseInt(setting('hashtag_count'), 10);
+function count(): number {
+  const configured = setting('hashtag_count');
 
   return Number.isFinite(configured) && configured > 0 ? Math.min(configured, 60) : 24;
 }
@@ -73,7 +86,7 @@ function count() {
  * sizes evenly however lopsided the counts are, which is the only reason a
  * cloud communicates anything at a glance.
  */
-function rank(data, limit) {
+function rank(data: HashtagRow[], limit: number): RankedHashtag[] {
   const tags = data
     .map((row) => ({
       name: row.attributes?.name ?? '',
@@ -90,7 +103,7 @@ function rank(data, limit) {
   }));
 }
 
-function hashtagView(tag) {
+function hashtagView(tag: RankedHashtag): Mithril.Children {
   return (
     <Link
       className={`Cascade-hashtag Cascade-hashtag--w${tag.weight}`}

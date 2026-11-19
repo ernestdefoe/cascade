@@ -6,17 +6,14 @@
  * Verified against flarum/core v2.0.0-rc.8.
  */
 
-use ErnestDefoe\Cascade\Api\Controller\TrendingController;
 use ErnestDefoe\Cascade\Api\DiscussionResourceFields;
 use ErnestDefoe\Cascade\Api\ReactionFields;
+use ErnestDefoe\Cascade\Api\Resource\TrendingTagResource;
+use ErnestDefoe\Cascade\Frontend\StampPreset;
 use ErnestDefoe\Cascade\Presets;
 use Flarum\Api\Endpoint;
 use Flarum\Api\Resource\DiscussionResource;
 use Flarum\Extend;
-use Flarum\Frontend\Document;
-use Flarum\Http\RequestUtil;
-use Flarum\Settings\SettingsRepositoryInterface;
-use Psr\Http\Message\ServerRequestInterface as Request;
 
 return [
     // -- Frontend ------------------------------------------------------------
@@ -28,41 +25,10 @@ return [
         // spinner forever with nothing in the console to explain it.
         ->jsDirectory(__DIR__.'/js/dist/forum')
         ->css(__DIR__.'/less/forum.less')
-        // Stamp the active preset onto <html>, the same way core stamps
-        // `data-theme` and `data-colored-header`. Doing it server-side matters
-        // for two reasons: the attribute is present in the very first byte of
-        // HTML, so there is no flash of the other preset before JS runs; and a
-        // frontend initializer CANNOT read this setting anyway, because
-        // Application::boot() runs every initializer BEFORE it assigns
-        // `app.forum` - so `app.forum.attribute()` at that point is a
-        // TypeError that takes the whole forum down.
-        //
-        // Core calls content callbacks as `$callback($document, $request)`, so
-        // the actor is reachable here and the stamp can be the READER'S choice
-        // rather than one value for the whole forum - still server-side, still
-        // in the first byte, still no flash.
-        ->content(function (Document $document, Request $request) {
-            $settings = resolve(SettingsRepositoryInterface::class);
-
-            $preset = $settings->get('ernestdefoe-cascade.preset', 'wall');
-
-            if ($settings->get('ernestdefoe-cascade.allow_user_preset', true)) {
-                $actor = RequestUtil::getActor($request);
-
-                // Guests have no preferences to read; they get the forum's.
-                if ($actor->exists) {
-                    $chosen = $actor->getPreference('cascadePreset');
-
-                    // An empty preference means "follow the forum", which is
-                    // the picker's first option - not a value to fall back from.
-                    if (is_string($chosen) && $chosen !== '') {
-                        $preset = $chosen;
-                    }
-                }
-            }
-
-            $document->extraAttributes['data-cascade-preset'] = Presets::valid($preset);
-        }),
+        // The active preset on <html>, server-side so there is no flash of the
+        // other preset before JS runs. See the class for why it cannot be done
+        // from a frontend initializer.
+        ->content(StampPreset::class),
 
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
@@ -132,8 +98,13 @@ return [
         ]),
 
     // -- Right rail ----------------------------------------------------------
-    (new Extend\Routes('api'))
-        ->get('/cascade/trending', 'cascade.trending', TrendingController::class),
+    //
+    // Trending tags need flarum/tags: without it there is nothing to rank, and
+    // the resource never exists (the widget is only shown when Tags is on).
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-tags', fn () => [
+            new Extend\ApiResource(TrendingTagResource::class),
+        ]),
 
     /*
      * The member's own preset choice.
@@ -163,12 +134,8 @@ return [
         ->serializeToForum('cascade.preset', 'ernestdefoe-cascade.preset', 'strval')
         ->serializeToForum('cascade.feed_density', 'ernestdefoe-cascade.feed_density', 'strval')
         ->serializeToForum('cascade.excerpt_length', 'ernestdefoe-cascade.excerpt_length', 'intval')
-        ->serializeToForum('cascade.rail_tag_count', 'ernestdefoe-cascade.rail_tag_count', 'intval')
         ->serializeToForum('cascade.widget_trending', 'ernestdefoe-cascade.widget_trending', 'boolval')
-        ->serializeToForum('cascade.widget_presence', 'ernestdefoe-cascade.widget_presence', 'boolval')
-        ->serializeToForum('cascade.widget_follow', 'ernestdefoe-cascade.widget_follow', 'boolval')
         ->serializeToForum('cascade.engagement_bar', 'ernestdefoe-cascade.engagement_bar', 'strval')
-        ->serializeToForum('cascade.mobile_tabbar', 'ernestdefoe-cascade.mobile_tabbar', 'strval')
         ->serializeToForum('cascade.allow_user_preset', 'ernestdefoe-cascade.allow_user_preset', 'boolval')
         ->serializeToForum('cascade.widget_hashtags', 'ernestdefoe-cascade.widget_hashtags', 'boolval')
         ->serializeToForum('cascade.hashtag_count', 'ernestdefoe-cascade.hashtag_count', 'intval')
@@ -176,12 +143,8 @@ return [
         ->default('ernestdefoe-cascade.preset', 'wall')
         ->default('ernestdefoe-cascade.feed_density', 'excerpt_media')
         ->default('ernestdefoe-cascade.excerpt_length', '280')
-        ->default('ernestdefoe-cascade.rail_tag_count', '6')
         ->default('ernestdefoe-cascade.widget_trending', '1')
-        ->default('ernestdefoe-cascade.widget_presence', '1')
-        ->default('ernestdefoe-cascade.widget_follow', '1')
         ->default('ernestdefoe-cascade.engagement_bar', 'auto')
-        ->default('ernestdefoe-cascade.mobile_tabbar', 'extension')
         ->default('ernestdefoe-cascade.allow_user_preset', '1')
         ->default('ernestdefoe-cascade.widget_hashtags', '1')
         ->default('ernestdefoe-cascade.hashtag_count', '24'),

@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import type Reaction from 'ext:fof/reactions/common/models/Reaction';
 
 /**
  * Reaction plumbing shared by the card control and the summary row.
@@ -17,7 +18,7 @@ import app from 'flarum/forum/app';
  * extension's own settings - that is honoured first, below. This map only
  * exists so the six defaults look right out of the box.
  */
-const EMOJI = {
+const EMOJI: Record<string, string> = {
   thumbsup: '\u{1F44D}',
   thumbsdown: '\u{1F44E}',
   laughing: '\u{1F606}',
@@ -34,19 +35,19 @@ const EMOJI = {
   party: '\u{1F389}',
 };
 
-/** Every enabled reaction type, in the order the admin arranged them. */
-export function reactionTypes() {
-  try {
-    return app.store
-      .all('reactions')
-      .filter((r) => r.enabled() !== false)
-      .sort((a, b) => Number(a.id()) - Number(b.id()));
-  } catch (e) {
-    return [];
-  }
+/**
+ * Every enabled reaction type, in the order the admin arranged them.
+ *
+ * Empty without fof/reactions: the store answers an unknown type with [].
+ */
+export function reactionTypes(): Reaction[] {
+  return app.store
+    .all<Reaction>('reactions')
+    .filter((r) => r.enabled() !== false)
+    .sort((a, b) => Number(a.id()) - Number(b.id()));
 }
 
-export function reactionById(id) {
+export function reactionById(id: string | number | null | undefined): Reaction | null {
   if (id === null || id === undefined) return null;
 
   return reactionTypes().find((r) => String(r.id()) === String(id)) || null;
@@ -57,22 +58,22 @@ export function reactionById(id) {
  * one, then the emoji for a known shortname, then the shortname itself so an
  * unknown reaction is still legible rather than blank.
  */
-export function reactionGlyph(reaction) {
+export function reactionGlyph(reaction: Reaction | null): string {
   if (!reaction) return '';
 
-  const display = reaction.display && reaction.display();
+  const display = reaction.display();
 
   if (display) return display;
 
-  const identifier = reaction.identifier ? reaction.identifier() : '';
+  const identifier = reaction.identifier() || '';
 
   return EMOJI[identifier] || identifier;
 }
 
-export function reactionLabel(reaction) {
+export function reactionLabel(reaction: Reaction | null): ReturnType<typeof app.translator.trans> {
   if (!reaction) return '';
 
-  const identifier = reaction.identifier ? reaction.identifier() : '';
+  const identifier = reaction.identifier() || '';
   const key = `ernestdefoe-cascade.forum.reactions.${identifier}`;
   const translated = app.translator.trans(key);
 
@@ -92,11 +93,8 @@ export function reactionLabel(reaction) {
  * resource: a reaction id sets it, null clears it. Cascade does not touch the
  * reaction tables itself - every permission check, notification and
  * gamification hook lives behind that endpoint.
- *
- * @param {string|number} postId
- * @param {string|number|null} reactionId
  */
-export function sendReaction(postId, reactionId) {
+export function sendReaction(postId: string | number, reactionId: string | number | null): Promise<unknown> {
   return app.request({
     method: 'PATCH',
     url: `${app.forum.attribute('apiUrl')}/posts/${postId}`,

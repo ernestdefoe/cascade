@@ -42,60 +42,78 @@ class ReactionFields
     public function __invoke(): array
     {
         return [
-            // The post a reaction actually acts on. Just the `first_post_id`
-            // column already present on the discussions row.
-            Schema\Integer::make('cascadeFirstPostId')
-                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context))
-                ->get(fn (Discussion $discussion) => $discussion->first_post_id),
-
-            // [reactionId => count], zero-count types dropped so a page of
-            // twenty rows does not carry a hundred-odd empty entries.
-            Schema\Arr::make('cascadeReactionCounts')
-                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context))
-                ->get(function (Discussion $discussion, Context $context) {
-                    if (! $discussion->first_post_id) {
-                        return (object) [];
-                    }
-
-                    $postId = (int) $discussion->first_post_id;
-
-                    // Cast so an empty map serialises as {} rather than [] -
-                    // the frontend indexes it by reaction id either way, but a
-                    // bare array would arrive as a JS array and read wrong.
-                    $shape = fn (array $counts): object => (object) array_filter($counts, fn ($count) => $count > 0);
-
-                    // fof/reactions >= 2.0.1: register the post and hand the
-                    // serializer a closure; the first one resolved loads every
-                    // registered post in one batch (it no longer primes the
-                    // resolver from the discussion list).
-                    if (method_exists($this->resolver, 'deferCounts')) { // @phpstan-ignore function.alreadyNarrowedType (absent on the 2.0.0 betas)
-                        $deferred = $this->resolver->deferCounts($postId, $context->request);
-
-                        return fn () => $shape($deferred());
-                    }
-
-                    // 2.0.0 betas: already primed for every row's first post.
-                    return $shape($this->resolver->countsFor($postId)); // @phpstan-ignore arguments.count (the betas' signature)
-                }),
-
-            Schema\Number::make('cascadeUserReaction')
-                ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context))
-                ->get(function (Discussion $discussion, Context $context) {
-                    if (! $discussion->first_post_id || ! $context->getActor()->exists) {
-                        return null;
-                    }
-
-                    // Deferred on >= 2.0.1 for the same one-batch load; the
-                    // betas take the same arguments and are already primed.
-                    $method = method_exists($this->resolver, 'deferUserReaction') ? 'deferUserReaction' : 'userReactionFor'; // @phpstan-ignore function.alreadyNarrowedType
-
-                    return $this->resolver->{$method}(
-                        (int) $discussion->first_post_id,
-                        $context->getActor(),
-                        $context->request
-                    );
-                }),
+            $this->firstPostIdField(),
+            $this->reactionCountsField(),
+            $this->userReactionField(),
         ];
+    }
+
+    /**
+     * The post a reaction actually acts on. Just the `first_post_id` column
+     * already present on the discussions row.
+     */
+    protected function firstPostIdField(): Schema\Integer
+    {
+        return Schema\Integer::make('cascadeFirstPostId')
+            ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context))
+            ->get(fn (Discussion $discussion) => $discussion->first_post_id);
+    }
+
+    /**
+     * [reactionId => count], zero-count types dropped so a page of twenty rows
+     * does not carry a hundred-odd empty entries.
+     */
+    protected function reactionCountsField(): Schema\Arr
+    {
+        return Schema\Arr::make('cascadeReactionCounts')
+            ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context))
+            ->get(function (Discussion $discussion, Context $context) {
+                if (! $discussion->first_post_id) {
+                    return (object) [];
+                }
+
+                $postId = (int) $discussion->first_post_id;
+
+                // Cast so the map stays keyed by reaction id rather than being
+                // re-indexed as a list. An empty one can still reach the client
+                // as []; the frontend copies the counts into an object before
+                // reading them, so both read the same.
+                $shape = fn (array $counts): object => (object) array_filter($counts, fn ($count) => $count > 0);
+
+                // fof/reactions >= 2.0.1: register the post and hand the
+                // serializer a closure; the first one resolved loads every
+                // registered post in one batch (it no longer primes the
+                // resolver from the discussion list).
+                if (method_exists($this->resolver, 'deferCounts')) { // @phpstan-ignore function.alreadyNarrowedType (absent on the 2.0.0 betas)
+                    $deferred = $this->resolver->deferCounts($postId, $context->request);
+
+                    return fn () => $shape($deferred());
+                }
+
+                // 2.0.0 betas: already primed for every row's first post.
+                return $shape($this->resolver->countsFor($postId)); // @phpstan-ignore arguments.count (the betas' signature)
+            });
+    }
+
+    protected function userReactionField(): Schema\Number
+    {
+        return Schema\Number::make('cascadeUserReaction')
+            ->visible(fn (Discussion $discussion, Context $context) => $this->canCompute($discussion, $context))
+            ->get(function (Discussion $discussion, Context $context) {
+                if (! $discussion->first_post_id || ! $context->getActor()->exists) {
+                    return null;
+                }
+
+                // Deferred on >= 2.0.1 for the same one-batch load; the betas
+                // take the same arguments and are already primed.
+                $method = method_exists($this->resolver, 'deferUserReaction') ? 'deferUserReaction' : 'userReactionFor'; // @phpstan-ignore function.alreadyNarrowedType
+
+                return $this->resolver->{$method}(
+                    (int) $discussion->first_post_id,
+                    $context->getActor(),
+                    $context->request
+                );
+            });
     }
 
     /**

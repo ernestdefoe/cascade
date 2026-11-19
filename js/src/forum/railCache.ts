@@ -10,15 +10,17 @@ import app from 'flarum/forum/app';
  * trending list for an hour anyway; five minutes here only spares the request.
  */
 const TTL = 5 * 60 * 1000;
-const cache = new Map();
+const cache = new Map<string, { at: number; promise: Promise<unknown> }>();
 
-export default function railRequest(url, params) {
+export default function railRequest<T>(url: string, params?: Record<string, unknown>): Promise<T> {
   const key = url + (params ? JSON.stringify(params) : '');
   const hit = cache.get(key);
 
-  if (hit && Date.now() - hit.at < TTL) return hit.promise;
+  if (hit && Date.now() - hit.at < TTL) return hit.promise as Promise<T>;
 
-  const promise = app.request({ method: 'GET', url, params }).catch((e) => {
+  const promise = app.request<T>({ method: 'GET', url, params }).catch((e: unknown) => {
+    // Rethrown, not swallowed: the widget that asked decides what a failure
+    // looks like.
     // A failure is not remembered: the next visit tries again.
     cache.delete(key);
     throw e;

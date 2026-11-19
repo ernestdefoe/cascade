@@ -1,8 +1,11 @@
 import app from 'flarum/forum/app';
-import Component from 'flarum/common/Component';
+import Component, { type ComponentAttrs } from 'flarum/common/Component';
 import Avatar from 'flarum/common/components/Avatar';
 import Link from 'flarum/common/components/Link';
 import username from 'flarum/common/helpers/username';
+import type Discussion from 'flarum/common/models/Discussion';
+import type User from 'flarum/common/models/User';
+import type Mithril from 'mithril';
 
 import { openModal } from '../repliesState';
 
@@ -15,8 +18,12 @@ import { openModal } from '../repliesState';
  * the way a social feed does it, and the reason the card never grows into a
  * page of its own.
  */
-export default class CascadeReplies extends Component {
-  view(vnode) {
+export interface ICascadeRepliesAttrs extends ComponentAttrs {
+  discussion: Discussion;
+}
+
+export default class CascadeReplies extends Component<ICascadeRepliesAttrs> {
+  view(vnode: Mithril.Vnode<ICascadeRepliesAttrs, this>) {
     const discussion = vnode.attrs.discussion;
     const preview = discussion.cascadeLastReply();
 
@@ -24,7 +31,7 @@ export default class CascadeReplies extends Component {
 
     // The opening post is not a reply, so the count of *replies* is one less
     // than the comment count, and the preview already shows one of them.
-    const remaining = Math.max(0, discussion.commentCount() - 2);
+    const remaining = Math.max(0, (discussion.commentCount() ?? 0) - 2);
 
     return (
       <div className="Cascade-replies">
@@ -39,7 +46,7 @@ export default class CascadeReplies extends Component {
     );
   }
 
-  previewBubble(discussion, text) {
+  previewBubble(discussion: Discussion, text: string) {
     const user = discussion.lastPostedUser();
 
     return (
@@ -53,7 +60,7 @@ export default class CascadeReplies extends Component {
     );
   }
 
-  avatar(user) {
+  avatar(user: User | null | false | undefined) {
     if (!user) return <span className="Cascade-reply-avatar">{Avatar.component({ user: null })}</span>;
 
     return (

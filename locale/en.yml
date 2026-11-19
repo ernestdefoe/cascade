@@ -66,8 +66,6 @@ ernestdefoe-cascade:
 
   admin:
     settings:
-      title: "Cascade"
-
       preset_label: Preset
       preset_help: >-
         The look every member gets unless they pick their own below.
@@ -119,10 +117,9 @@ ernestdefoe-cascade:
 
       engagement_bar_label: Engagement bar
       engagement_bar_help: >-
-        Auto shows Reply and Share on every row, and adds a reaction control on
-        the discussion page when flarum/likes or fof/reactions is enabled.
-        Cascade never ships reactions of its own, so with neither installed
-        there is no reaction control to show.
+        Reply and Share on every feed row, plus a reaction control when
+        fof/reactions is enabled. Auto and Always show both show the bar; Hide
+        removes it from the feed.
       engagement_bar_auto: Auto
       engagement_bar_on: Always show
       engagement_bar_off: Hide

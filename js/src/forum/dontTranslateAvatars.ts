@@ -1,4 +1,5 @@
 import { extend } from 'flarum/common/extend';
+import type Avatar from 'flarum/common/components/Avatar';
 
 /**
  * Tell the browser to leave avatar initials alone.
@@ -19,9 +20,9 @@ import { extend } from 'flarum/common/extend';
  * which takes down every page rather than one component — the same trap that
  * bit the settings-page picker.
  */
-export default function dontTranslateAvatars() {
-  extend('flarum/common/components/Avatar', 'view', function (vnode) {
-    if (!vnode || typeof vnode !== 'object' || !vnode.attrs) return;
+export default function dontTranslateAvatars(): void {
+  extend<Avatar, 'view'>('flarum/common/components/Avatar', 'view', function (vnode) {
+    if (!vnode || typeof vnode !== 'object' || Array.isArray(vnode) || !vnode.attrs) return;
 
     /*
      * 🚨 The CLASS, not `translate="no"`.

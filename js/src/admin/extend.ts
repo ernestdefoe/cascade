@@ -14,7 +14,7 @@ import Admin from 'flarum/common/extenders/Admin';
  * English in a component" true of the forum only — an admin running Cascade in
  * any other language got a settings page in English and no way to fix it.
  */
-const t = (key) => app.translator.trans(`ernestdefoe-cascade.admin.settings.${key}`);
+const t = (key: string) => app.translator.trans(`ernestdefoe-cascade.admin.settings.${key}`);
 
 /**
  * The three preset names live under `lib.` because BOTH frontends show them:
@@ -25,7 +25,7 @@ const t = (key) => app.translator.trans(`ernestdefoe-cascade.admin.settings.${ke
  * key reaches the admin page as its own raw name, and the preset dropdown
  * quite happily rendered `ernestdefoe-cascade.ref.preset.wall` as its label.
  */
-const presetOption = (key) => app.translator.trans(`ernestdefoe-cascade.lib.preset.${key}`);
+const presetOption = (key: string) => app.translator.trans(`ernestdefoe-cascade.lib.preset.${key}`);
 
 export default [
   new Admin()
@@ -44,21 +44,18 @@ export default [
         timeline: presetOption('timeline'),
         stream: presetOption('stream'),
       },
-      default: 'wall',
     }))
     .setting(() => ({
       setting: 'ernestdefoe-cascade.allow_user_preset',
       label: t('allow_user_preset_label'),
       help: t('allow_user_preset_help'),
       type: 'boolean',
-      default: true,
     }))
     .setting(() => ({
       setting: 'ernestdefoe-cascade.widget_hashtags',
       label: t('widget_hashtags_label'),
       help: t('widget_hashtags_help'),
       type: 'boolean',
-      default: true,
     }))
     .setting(() => ({
       setting: 'ernestdefoe-cascade.hashtag_count',
@@ -68,7 +65,6 @@ export default [
       min: 6,
       max: 60,
       step: 2,
-      default: 24,
     }))
     .setting(() => ({
       setting: 'ernestdefoe-cascade.feed_density',
@@ -80,7 +76,6 @@ export default [
         excerpt: t('feed_density_excerpt'),
         title: t('feed_density_title'),
       },
-      default: 'excerpt_media',
     }))
     .setting(() => ({
       setting: 'ernestdefoe-cascade.excerpt_length',
@@ -108,6 +103,5 @@ export default [
         on: t('engagement_bar_on'),
         off: t('engagement_bar_off'),
       },
-      default: 'auto',
     })),
 ];
