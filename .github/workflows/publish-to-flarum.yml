@@ -14,7 +14,8 @@ on:
         type: string
 
 permissions:
-  contents: read
+  # write: the last step shows plain names on the GitHub release (see there).
+  contents: write
 
 jobs:
   post:
@@ -192,7 +193,10 @@ jobs:
               return f'{who} ([{FORUMS[home][1]}]({info["url"]}))' if info else who
 
           MENTION = re.compile(r'@"([^"\n]+)"#([pe])(\d+)')
-          body = os.environ.get("POST_BODY", "")
+          # A re-run reads the release after the last step hid the markup in a
+          # comment beside the plain name: put the markup back first.
+          HIDDEN = re.compile(r'<!-- (@"([^"\n]+)"#[pe]\d+) -->\2')
+          body = HIDDEN.sub(r'\1', os.environ.get("POST_BODY", ""))
           out = {t: MENTION.sub(lambda m: mention(m, t), body) for t in ("edonline", "discuss")}
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
@@ -559,3 +563,29 @@ jobs:
           if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
             exit 1
           fi
+
+      # The forum markup (@"Name"#e123) is for the forum posts only: on the
+      # GitHub release it showed as raw text (Claudius, 2026-11-24). Once the
+      # posts are made, the release shows the plain name, with the markup kept
+      # in an HTML comment beside it, which GitHub does not show, so a re-run
+      # still posts the real mentions.
+      - name: Show plain names on the GitHub release
+        if: ${{ always() && steps.thanks.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GH_REPO}/releases/tags/${RELEASE_TAG}" --jq '.id, .body' > /tmp/release.txt
+          python3 - <<'PY'
+          import os, re, subprocess
+          lines = open("/tmp/release.txt").read().split("\n", 1)
+          rid, body = lines[0].strip(), (lines[1] if len(lines) > 1 else "").rstrip("\n")
+          plain = re.sub(r'(?<!<!-- )@"([^"\n]+)"#[pe]\d+', lambda m: f'<!-- {m.group(0)} -->{m.group(1)}', body)
+          if plain == body:
+              print("No forum mentions in the release notes.")
+          else:
+              open("/tmp/plain.md", "w").write(plain)
+              subprocess.run(["gh", "api", "-X", "PATCH", f"repos/{os.environ['GH_REPO']}/releases/{rid}", "-F", "body=@/tmp/plain.md", "--silent"], check=True)
+              print("The GitHub release now shows plain names.")
+          PY
